@@ -3,14 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Annelid Assault: Unreal Edition</title>
+  <title>Annelid Assault - Artillery Tactics</title>
   <!-- PeerJS for WebRTC Multiplayer -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <!-- MQTT.js for Global Chat -->
-  <script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
   <style>
     :root {
-      --panel-bg: rgba(15, 23, 42, 0.88);
+      --panel-bg: rgba(15, 23, 42, 0.9);
       --border-color: rgba(255, 255, 255, 0.15);
       --team-red: #f43f5e;
       --team-blue: #0ea5e9;
@@ -27,7 +25,7 @@
     }
 
     body {
-      background-color: #000;
+      background-color: #0b0f19;
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
@@ -39,19 +37,15 @@
 
     /* Top HUD */
     #hud-top {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
       height: 48px;
-      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%);
+      background: var(--panel-bg);
       border-bottom: 1px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 12px;
       z-index: 30;
-      backdrop-filter: blur(8px);
+      flex-shrink: 0;
     }
 
     .team-badge {
@@ -75,11 +69,8 @@
       font-weight: 900;
       color: var(--accent-gold);
     }
-    #net-status-badge {
-      font-size: 0.65rem;
-      background: rgba(255,255,255,0.1);
-      padding: 1px 6px;
-      border-radius: 8px;
+    #wind-indicator {
+      font-size: 0.7rem;
       color: #cbd5e1;
     }
 
@@ -90,29 +81,28 @@
     }
 
     .btn-icon {
-      background: var(--panel-bg);
+      background: #1e293b;
       border: 1px solid var(--border-color);
       color: #fff;
-      padding: 5px 10px;
+      padding: 4px 8px;
       border-radius: 6px;
       cursor: pointer;
       font-size: 0.75rem;
       font-weight: 600;
     }
     .btn-donate {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
+      background: var(--accent-gold);
       color: #000;
       font-weight: 800;
       border: none;
     }
 
-    /* Single Game Canvas */
+    /* Game Viewport */
     #viewport-container {
       flex: 1;
       position: relative;
       overflow: hidden;
-      background: #080b11;
-      cursor: crosshair;
+      background: #020617;
     }
 
     #game-canvas {
@@ -158,12 +148,11 @@
       border-radius: 12px;
       border: 1px solid var(--border-color);
       z-index: 25;
-      backdrop-filter: blur(6px);
       max-width: 95vw;
       overflow-x: auto;
     }
     .wpn-btn {
-      background: rgba(30, 41, 59, 0.9);
+      background: #1e293b;
       border: 1px solid rgba(255,255,255,0.15);
       color: #fff;
       padding: 5px 8px;
@@ -179,7 +168,7 @@
       color: #000;
     }
 
-    /* Touch Controls */
+    /* Mobile Touch Controls */
     #touch-controls {
       position: absolute;
       bottom: 6px;
@@ -192,7 +181,7 @@
       z-index: 25;
       pointer-events: none;
     }
-    .touch-btn-group { display: flex; gap: 5px; pointer-events: auto; }
+    .touch-btn-group { display: flex; gap: 6px; pointer-events: auto; }
     .t-btn {
       width: 44px;
       height: 44px;
@@ -209,101 +198,6 @@
     .t-btn:active { background: var(--accent-gold); color: #000; }
     .t-btn-fire { width: 75px; background: var(--team-red); font-weight: bold; font-size: 0.85rem; }
 
-    /* Floating Chat */
-    #chat-toggle-btn {
-      position: absolute;
-      bottom: 60px;
-      left: 10px;
-      z-index: 35;
-      background: var(--panel-bg);
-      border: 1px solid var(--border-color);
-      color: #fff;
-      padding: 5px 10px;
-      border-radius: 16px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      backdrop-filter: blur(6px);
-    }
-    #chat-unread-badge {
-      background: var(--team-red);
-      color: #fff;
-      font-size: 0.65rem;
-      padding: 1px 5px;
-      border-radius: 10px;
-      display: none;
-    }
-
-    #global-chat-container {
-      position: absolute;
-      bottom: 100px;
-      left: 10px;
-      width: 300px;
-      max-width: calc(100vw - 20px);
-      height: 220px;
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      z-index: 35;
-      display: none;
-      flex-direction: column;
-      backdrop-filter: blur(10px);
-      overflow: hidden;
-    }
-    #chat-header {
-      background: rgba(0, 0, 0, 0.4);
-      padding: 6px 10px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      color: var(--accent-gold);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    #chat-messages {
-      flex: 1;
-      padding: 6px 10px;
-      overflow-y: auto;
-      font-size: 0.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .chat-msg { line-height: 1.25; word-break: break-word; }
-    .chat-author { font-weight: bold; color: var(--team-blue); }
-    .chat-author.red { color: var(--team-red); }
-
-    #chat-input-bar {
-      display: flex;
-      padding: 5px;
-      gap: 4px;
-      background: rgba(0,0,0,0.3);
-      border-top: 1px solid rgba(255,255,255,0.08);
-    }
-    #chat-input {
-      flex: 1;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid #334155;
-      color: #fff;
-      padding: 5px 8px;
-      border-radius: 5px;
-      font-size: 0.75rem;
-      outline: none;
-    }
-    #chat-send-btn {
-      background: var(--team-blue);
-      border: none;
-      color: #fff;
-      padding: 5px 8px;
-      border-radius: 5px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
     /* Modals */
     .modal-overlay {
       position: absolute;
@@ -313,25 +207,20 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      backdrop-filter: blur(10px);
     }
     .modal-card {
       background: #0f172a;
-      border: 1px solid rgba(255,255,255,0.2);
+      border: 1px solid var(--border-color);
       border-radius: 14px;
       padding: 20px;
       text-align: center;
-      max-width: 380px;
+      max-width: 360px;
       width: 90%;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-    .modal-card h2 {
-      font-size: 1.4rem;
-      color: var(--accent-gold);
-      font-weight: 900;
-    }
+    .modal-card h2 { font-size: 1.4rem; color: var(--accent-gold); font-weight: 900; }
     .btn-main {
       background: var(--team-blue);
       color: #fff;
@@ -343,7 +232,6 @@
       cursor: pointer;
     }
     .btn-danger { background: var(--team-red); }
-    
     .select-input {
       background: #1e293b;
       border: 1px solid #475569;
@@ -353,61 +241,28 @@
       font-size: 0.85rem;
       outline: none;
     }
-    .input-code {
-      background: #0b1120;
-      border: 1px solid #475569;
-      color: #fff;
-      padding: 8px;
-      border-radius: 6px;
-      font-size: 1.3rem;
-      text-align: center;
-      letter-spacing: 4px;
-      font-family: var(--font-code);
-      outline: none;
-    }
-
-    .donate-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin: 8px 0;
-    }
-    .donate-card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      padding: 12px;
-      border-radius: 8px;
-      text-decoration: none;
-      color: #fff;
-      font-size: 0.8rem;
-      font-weight: bold;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
   </style>
 </head>
 <body>
 
-  <!-- Top HUD -->
+  <!-- Top Status Bar -->
   <header id="hud-top">
     <div class="team-badge red-team">
-      <span>🔴 <span id="red-health-summary">100 HP</span></span>
+      <span>🔴 <span id="red-health-summary">200 HP</span></span>
     </div>
     
     <div class="center-hud">
       <div id="turn-timer">30</div>
-      <div id="net-status-badge">Local Match</div>
+      <div id="wind-indicator">💨 Wind: 0</div>
     </div>
 
     <div class="team-badge blue-team">
-      <span>🔵 <span id="blue-health-summary">100 HP</span></span>
+      <span>🔵 <span id="blue-health-summary">200 HP</span></span>
     </div>
 
     <div class="top-actions">
-      <button class="btn-icon btn-donate" onclick="openDonateModal()">☕ Support</button>
-      <button class="btn-icon" onclick="openLobbyModal()">🗺️ Map</button>
+      <button class="btn-icon btn-donate" onclick="openDonateModal()">☕ Tip</button>
+      <button class="btn-icon" onclick="openLobbyModal()">⚙️ Menu</button>
     </div>
   </header>
 
@@ -425,34 +280,12 @@
       <button class="wpn-btn active" onclick="selectWeapon('bazooka')">🚀 Bazooka</button>
       <button class="wpn-btn" onclick="selectWeapon('grenade')">💣 Grenade</button>
       <button class="wpn-btn" onclick="selectWeapon('cluster')">💥 Cluster</button>
-      <button class="wpn-btn" onclick="selectWeapon('holy')">🕊️ Holy</button>
+      <button class="wpn-btn" onclick="selectWeapon('shotgun')">🔫 Shotgun</button>
       <button class="wpn-btn" onclick="selectWeapon('airstrike')">✈️ Air Strike</button>
-      <button class="wpn-btn" onclick="selectWeapon('railgun')">⚡ Railgun</button>
       <button class="wpn-btn" onclick="selectWeapon('dynamite')">🧨 Dynamite</button>
-      <button class="wpn-btn" onclick="selectWeapon('jetpack')">🎒 Jetpack</button>
     </div>
 
-    <!-- Chat Toggle -->
-    <button id="chat-toggle-btn" onclick="toggleChat()">
-      💬 Chat <span id="chat-unread-badge">0</span>
-    </button>
-
-    <!-- Global Chat Container -->
-    <div id="global-chat-container">
-      <div id="chat-header">
-        <span>🌐 Global Lobby Chat</span>
-        <button style="background:none; border:none; color:#cbd5e1; cursor:pointer;" onclick="toggleChat()">✕</button>
-      </div>
-      <div id="chat-messages">
-        <div class="chat-msg" style="color:#64748b; font-style:italic;">Connecting to live chat...</div>
-      </div>
-      <div id="chat-input-bar">
-        <input type="text" id="chat-input" placeholder="Type message..." maxlength="120" onkeydown="if(event.key==='Enter') sendChatMessage()">
-        <button id="chat-send-btn" onclick="sendChatMessage()">Send</button>
-      </div>
-    </div>
-
-    <!-- Mobile Touch Controls -->
+    <!-- Touch Controls for Mobile -->
     <div id="touch-controls">
       <div class="touch-btn-group">
         <button class="t-btn" id="btn-left">◀</button>
@@ -467,70 +300,46 @@
     </div>
   </div>
 
-  <!-- Main Menu / Match Lobby -->
+  <!-- Menu / Map Lobby -->
   <div id="lobby-modal" class="modal-overlay">
     <div class="modal-card">
       <h2>ANNELID ASSAULT</h2>
-      <p style="font-size:0.8rem; color:#94a3b8;">Unreal Edition • 2D Artillery Tactics</p>
+      <p style="font-size:0.8rem; color:#94a3b8;">Choose Map & Play</p>
       
       <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
-        <label style="font-size:0.75rem; color:#94a3b8; font-weight:bold;">CHOOSE MAP BIOME:</label>
+        <label style="font-size:0.75rem; color:#94a3b8; font-weight:bold;">BIOME:</label>
         <select id="biome-selector" class="select-input">
-          <option value="volcano">🌋 Volcanic Hellscape (Lava Sea)</option>
-          <option value="moon">🌙 Lunar Outpost (Low-G Craters)</option>
-          <option value="toxic">☣️ Toxic Wasteland (Acid Fog)</option>
-          <option value="snow">❄️ Arctic Tundra (Ice Blizzard)</option>
-          <option value="classic" selected>🌿 Emerald Highlands (Classic)</option>
+          <option value="classic" selected>🌿 Emerald Highlands</option>
+          <option value="volcano">🌋 Volcanic Hellscape (Lava)</option>
+          <option value="moon">🌙 Lunar Outpost (Low Gravity)</option>
+          <option value="toxic">☣️ Toxic Wasteland</option>
+          <option value="snow">❄️ Arctic Tundra (Ice)</option>
         </select>
       </div>
 
-      <button class="btn-main" onclick="startLocalGame()">🎮 Local Pass & Play</button>
-      <button class="btn-main" style="background:var(--accent-gold); color:#000;" onclick="showHostUI()">🌐 Host Online Match</button>
-      <button class="btn-main" style="background:var(--team-blue);" onclick="showJoinUI()">🔗 Join Online Match</button>
-
-      <!-- Host Panel -->
-      <div id="host-panel" style="display:none; flex-direction:column; gap:8px;">
-        <div style="font-size:0.75rem; color:#94a3b8;">Share this 4-Digit Room Code:</div>
-        <div id="host-room-code" style="font-size:1.8rem; font-weight:bold; color:var(--accent-gold); font-family:var(--font-code);">----</div>
-        <div style="font-size:0.75rem; color:#cbd5e1;" id="host-status-text">Creating connection...</div>
-        <button class="btn-main btn-danger" onclick="cancelLobby()">Cancel</button>
-      </div>
-
-      <!-- Join Panel -->
-      <div id="join-panel" style="display:none; flex-direction:column; gap:8px;">
-        <div style="font-size:0.75rem; color:#94a3b8;">Enter Host 4-Digit Code:</div>
-        <input type="text" id="join-code-input" class="input-code" maxlength="4" placeholder="1234">
-        <button class="btn-main" onclick="connectToHost()">Connect & Battle</button>
-        <button class="btn-main btn-danger" onclick="cancelLobby()">Cancel</button>
-      </div>
+      <button class="btn-main" onclick="startLocalGame()">🎮 Pass & Play (Local)</button>
+      <button class="btn-main" style="background:var(--accent-gold); color:#000;" onclick="startVsBot()">🤖 Play vs Computer AI</button>
     </div>
   </div>
 
-  <!-- Donation Modal -->
+  <!-- Tip Modal -->
   <div id="donate-modal" class="modal-overlay" style="display:none;">
     <div class="modal-card">
-      <h2 style="color:var(--accent-gold);">☕ SUPPORT THE CREATOR</h2>
-      <p style="font-size:0.8rem; color:#cbd5e1;">Enjoying Annelid Assault? Support game development with a coffee!</p>
-      
-      <div class="donate-grid">
-        <a href="https://ko-fi.com" target="_blank" class="donate-card">
-          <span style="font-size:1.3rem;">☕</span>
-          <span>Ko-fi Tip</span>
-        </a>
-        <a href="https://paypal.com" target="_blank" class="donate-card">
-          <span style="font-size:1.3rem;">💳</span>
-          <span>PayPal Tip</span>
-        </a>
+      <h2 style="color:var(--accent-gold);">☕ Support Dev</h2>
+      <p style="font-size:0.8rem; color:#cbd5e1;">Enjoying the game? Tips help keep the game updated!</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:8px 0;">
+        <a href="https://ko-fi.com" target="_blank" style="background:#1e293b; padding:10px; border-radius:6px; color:#fff; text-decoration:none; font-weight:bold; font-size:0.8rem;">☕ Ko-fi</a>
+        <a href="https://paypal.com" target="_blank" style="background:#1e293b; padding:10px; border-radius:6px; color:#fff; text-decoration:none; font-weight:bold; font-size:0.8rem;">💳 PayPal</a>
       </div>
       <button class="btn-main" onclick="closeDonateModal()">Close</button>
     </div>
   </div>
 
-  <!-- Match Over Modal -->
+  <!-- Game Over Modal -->
   <div id="gameover-modal" class="modal-overlay" style="display:none;">
     <div class="modal-card">
       <h2 id="winner-title">TEAM RED WINS!</h2>
-      <p style="color:#cbd5e1; font-size:0.8rem;" id="winner-desc">All opposing annelids eliminated.</p>
+      <p style="color:#cbd5e1; font-size:0.8rem;" id="winner-desc">All enemy worms eliminated.</p>
       <button class="btn-main" onclick="restartMatch()">Play Again</button>
     </div>
   </div>
@@ -558,392 +367,132 @@
           if (type === 'launch') {
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(140, t);
-            osc.frequency.exponentialRampToValueAtTime(550, t + 0.15);
+            osc.frequency.exponentialRampToValueAtTime(500, t + 0.15);
             gain.gain.setValueAtTime(0.3, t);
             gain.gain.linearRampToValueAtTime(0.01, t + 0.15);
             osc.start(t); osc.stop(t + 0.15);
           } else if (type === 'explode') {
-            const bufferSize = this.ctx.sampleRate * 0.35;
-            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-            const noise = this.ctx.createBufferSource();
-            noise.buffer = buffer;
-            const filter = this.ctx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(320, t);
-            filter.frequency.linearRampToValueAtTime(40, t + 0.35);
-            noise.connect(filter);
-            filter.connect(gain);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(120, t);
+            osc.frequency.linearRampToValueAtTime(30, t + 0.3);
             gain.gain.setValueAtTime(0.6, t);
-            gain.gain.linearRampToValueAtTime(0.01, t + 0.35);
-            noise.start(t); noise.stop(t + 0.35);
+            gain.gain.linearRampToValueAtTime(0.01, t + 0.3);
+            osc.start(t); osc.stop(t + 0.3);
           } else if (type === 'jump') {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(180, t);
-            osc.frequency.exponentialRampToValueAtTime(360, t + 0.12);
-            gain.gain.setValueAtTime(0.25, t);
-            gain.gain.linearRampToValueAtTime(0.01, t + 0.12);
-            osc.start(t); osc.stop(t + 0.12);
-          } else if (type === 'railgun') {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(800, t);
-            osc.frequency.exponentialRampToValueAtTime(80, t + 0.2);
-            gain.gain.setValueAtTime(0.3, t);
-            gain.gain.linearRampToValueAtTime(0.01, t + 0.2);
-            osc.start(t); osc.stop(t + 0.2);
-          } else if (type === 'jetpack') {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(90 + Math.random()*40, t);
-            gain.gain.setValueAtTime(0.12, t);
-            gain.gain.linearRampToValueAtTime(0.01, t + 0.08);
-            osc.start(t); osc.stop(t + 0.08);
-          } else if (type === 'splash') {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(260, t);
-            osc.frequency.linearRampToValueAtTime(80, t + 0.2);
-            gain.gain.setValueAtTime(0.3, t);
-            gain.gain.linearRampToValueAtTime(0.01, t + 0.2);
-            osc.start(t); osc.stop(t + 0.2);
+            osc.frequency.exponentialRampToValueAtTime(360, t + 0.1);
+            gain.gain.setValueAtTime(0.2, t);
+            gain.gain.linearRampToValueAtTime(0.01, t + 0.1);
+            osc.start(t); osc.stop(t + 0.1);
           }
         } catch(e) {}
       }
     };
 
-    /* GLOBAL CHAT */
-    const CHAT_TOPIC = 'annelid-assault-live-chat-global/lobby';
-    let mqttClient = null;
-    let chatUserHandle = 'Worm_' + Math.floor(100 + Math.random() * 900);
-    let isChatOpen = false;
-    let unreadCount = 0;
-
-    function initGlobalChat() {
-      try {
-        if (typeof mqtt === 'undefined') return;
-        mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
-          clientId: 'client_' + Math.random().toString(16).substr(2, 8),
-          keepalive: 60
-        });
-
-        mqttClient.on('connect', () => {
-          mqttClient.subscribe(CHAT_TOPIC);
-          const msgArea = document.getElementById('chat-messages');
-          msgArea.innerHTML = '<div class="chat-msg" style="color:#22c55e;">● Connected to Global Chat!</div>';
-        });
-
-        mqttClient.on('message', (topic, message) => {
-          try {
-            const payload = JSON.parse(message.toString());
-            renderIncomingMessage(payload);
-          } catch (e) {}
-        });
-      } catch(e) {
-        console.warn('Chat init error:', e);
-      }
-    }
-
-    function toggleChat() {
-      isChatOpen = !isChatOpen;
-      document.getElementById('global-chat-container').style.display = isChatOpen ? 'flex' : 'none';
-      if (isChatOpen) {
-        unreadCount = 0;
-        document.getElementById('chat-unread-badge').style.display = 'none';
-        document.getElementById('chat-input').focus();
-      }
-    }
-
-    function sendChatMessage() {
-      const input = document.getElementById('chat-input');
-      const text = input.value.trim();
-      if (!text || !mqttClient) return;
-
-      const payload = {
-        user: chatUserHandle,
-        team: myTeam,
-        text: text,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-
-      mqttClient.publish(CHAT_TOPIC, JSON.stringify(payload));
-      input.value = '';
-    }
-
-    function renderIncomingMessage(data) {
-      const msgArea = document.getElementById('chat-messages');
-      const row = document.createElement('div');
-      row.className = 'chat-msg';
-      const safeUser = data.user.replace(/</g, "&lt;");
-      const safeText = data.text.replace(/</g, "&lt;");
-      row.innerHTML = `<span class="chat-author ${data.team === 'red' ? 'red' : ''}">[${safeUser}]:</span> ${safeText}`;
-      msgArea.appendChild(row);
-      msgArea.scrollTop = msgArea.scrollHeight;
-
-      if (!isChatOpen) {
-        unreadCount++;
-        const badge = document.getElementById('chat-unread-badge');
-        badge.innerText = unreadCount;
-        badge.style.display = 'inline-block';
-      }
-    }
-
     /* MAP BIOMES */
     const BIOMES = {
-      classic: { name: 'Emerald Highlands', gravity: 0.28, friction: 0.85, waterColor: 'rgba(14, 165, 233, 0.65)', soil: '#573318', grass: '#22c55e', sky: ['#0c1938', '#1e3a5f', '#0284c7'] },
-      volcano: { name: 'Volcanic Hellscape', gravity: 0.30, friction: 0.90, waterColor: 'rgba(239, 68, 68, 0.85)', soil: '#261c1a', grass: '#ea580c', sky: ['#180505', '#450a0a', '#b91c1c'] },
-      moon: { name: 'Lunar Outpost', gravity: 0.14, friction: 0.92, waterColor: 'rgba(168, 85, 247, 0.5)', soil: '#334155', grass: '#94a3b8', sky: ['#030712', '#0f172a', '#3b0764'] },
-      toxic: { name: 'Toxic Wasteland', gravity: 0.28, friction: 0.82, waterColor: 'rgba(132, 204, 22, 0.85)', soil: '#1c1917', grass: '#84cc16', sky: ['#052e16', '#14532d', '#15803d'] },
-      snow: { name: 'Arctic Tundra', gravity: 0.28, friction: 0.96, waterColor: 'rgba(56, 189, 248, 0.7)', soil: '#475569', grass: '#f8fafc', sky: ['#082f49', '#0369a1', '#e0f2fe'] }
+      classic: { name: 'Emerald Highlands', gravity: 0.28, soil: '#573318', grass: '#22c55e', water: 'rgba(14, 165, 233, 0.65)' },
+      volcano: { name: 'Volcanic Hellscape', gravity: 0.30, soil: '#261c1a', grass: '#ea580c', water: 'rgba(239, 68, 68, 0.85)' },
+      moon: { name: 'Lunar Outpost', gravity: 0.14, soil: '#334155', grass: '#94a3b8', water: 'rgba(168, 85, 247, 0.5)' },
+      toxic: { name: 'Toxic Wasteland', gravity: 0.28, soil: '#1c1917', grass: '#84cc16', water: 'rgba(132, 204, 22, 0.85)' },
+      snow: { name: 'Arctic Tundra', gravity: 0.28, soil: '#475569', grass: '#f8fafc', water: 'rgba(56, 189, 248, 0.7)' }
     };
 
     let currentBiome = BIOMES.classic;
-    const WORLD_WIDTH = 2200;
-    const WORLD_HEIGHT = 1100;
-    const WATER_LEVEL = 1000;
+    const WORLD_WIDTH = 2000;
+    const WORLD_HEIGHT = 1000;
+    const WATER_LEVEL = 920;
 
     const gameCanvas = document.getElementById('game-canvas');
     const gameCtx = gameCanvas.getContext('2d');
 
-    // Off-screen terrain buffer
-    const terrainCanvas = document.createElement('canvas');
-    const terrainCtx = terrainCanvas.getContext('2d');
-
     let viewWidth = window.innerWidth;
     let viewHeight = window.innerHeight;
     let cameraX = 0, cameraY = 0;
-    let screenShake = 0;
-    let terrainData = new Uint8Array(WORLD_WIDTH * WORLD_HEIGHT);
 
-    /* MULTIPLAYER / PEERJS WITH STUN SERVERS */
-    let peer = null, netConn = null, isMultiplayer = false, isHost = false, myTeam = 'red';
+    /* ZERO-CRASH HEIGHTMAP TERRAIN */
+    let terrainHeights = new Float32Array(WORLD_WIDTH);
 
-    const PEER_CONFIG = {
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:global.stun.twilio.com:3478' }
-        ]
-      }
-    };
-
-    function showHostUI() {
-      document.querySelectorAll('#lobby-modal .btn-main').forEach(b => b.style.display = 'none');
-      document.getElementById('host-panel').style.display = 'flex';
-      const code = Math.floor(1000 + Math.random() * 9000).toString();
-      document.getElementById('host-room-code').innerText = code;
-      
-      try {
-        peer = new Peer('annelid-' + code, PEER_CONFIG);
-        isHost = true; myTeam = 'red';
-
-        peer.on('open', () => document.getElementById('host-status-text').innerText = 'Room Open! Waiting for opponent...');
-        peer.on('connection', conn => {
-          netConn = conn;
-          setupNetEvents();
-          document.getElementById('host-status-text').innerText = 'Opponent Connected! Starting...';
-          setTimeout(() => {
-            document.getElementById('lobby-modal').style.display = 'none';
-            document.getElementById('net-status-badge').innerText = 'Online: Host (🔴)';
-            startMatch(true);
-          }, 800);
-        });
-        peer.on('error', err => {
-          document.getElementById('host-status-text').innerText = 'Error: ' + err.type;
-        });
-      } catch(e) {
-        alert('Could not initialize peer network.');
-      }
-    }
-
-    function showJoinUI() {
-      document.querySelectorAll('#lobby-modal .btn-main').forEach(b => b.style.display = 'none');
-      document.getElementById('join-panel').style.display = 'flex';
-      isHost = false; myTeam = 'blue';
-    }
-
-    function connectToHost() {
-      const code = document.getElementById('join-code-input').value.trim();
-      if (code.length !== 4) return alert('Enter valid 4-digit code!');
-      
-      try {
-        peer = new Peer(PEER_CONFIG);
-        peer.on('open', () => {
-          netConn = peer.connect('annelid-' + code, { reliable: true });
-          setupNetEvents();
-          netConn.on('open', () => {
-            document.getElementById('lobby-modal').style.display = 'none';
-            document.getElementById('net-status-badge').innerText = 'Online: Guest (🔵)';
-            startMatch(false);
-          });
-        });
-        peer.on('error', () => alert('Could not connect to room ' + code));
-      } catch(e) {
-        alert('Network connection error.');
-      }
-    }
-
-    function setupNetEvents() {
-      isMultiplayer = true;
-      netConn.on('data', pkg => handleNetworkPacket(pkg));
-      netConn.on('close', () => { alert('Opponent disconnected!'); location.reload(); });
-    }
-
-    function sendNet(pkg) {
-      if (isMultiplayer && netConn && netConn.open) netConn.send(pkg);
-    }
-
-    function cancelLobby() {
-      if (peer) peer.destroy();
-      document.querySelectorAll('#lobby-modal .btn-main').forEach(b => b.style.display = 'block');
-      document.getElementById('host-panel').style.display = 'none';
-      document.getElementById('join-panel').style.display = 'none';
-    }
-
-    function startLocalGame() {
-      isMultiplayer = false;
-      document.getElementById('lobby-modal').style.display = 'none';
-      document.getElementById('net-status-badge').innerText = 'Local Match';
-      startMatch(true);
-    }
-
-    /* TERRAIN PROCEDURAL ENGINE */
-    function generateTerrain(seed = Math.random(), biomeKey = 'classic') {
+    function generateTerrain(biomeKey = 'classic') {
       currentBiome = BIOMES[biomeKey] || BIOMES.classic;
-      terrainCanvas.width = WORLD_WIDTH;
-      terrainCanvas.height = WORLD_HEIGHT;
-
-      terrainCtx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-      terrainData.fill(0);
-
-      const heights = new Float32Array(WORLD_WIDTH);
+      const seed = Math.random() * 10;
+      
       for (let x = 0; x < WORLD_WIDTH; x++) {
         const nx = x / WORLD_WIDTH;
-        let h = Math.sin(nx * 5.5 + seed * 9) * 150 +
-                Math.sin(nx * 13 + seed * 4) * 85 +
-                Math.sin(nx * 26) * 35 + 600;
+        let h = Math.sin(nx * 5.5 + seed) * 140 +
+                Math.sin(nx * 12 + seed * 2) * 70 +
+                Math.sin(nx * 24) * 30 + 580;
         
-        if (x < 160) h += (160 - x) * 3.5;
-        if (x > WORLD_WIDTH - 160) h += (x - (WORLD_WIDTH - 160)) * 3.5;
-        heights[x] = Math.min(WATER_LEVEL - 50, h);
-      }
-
-      // Soil
-      terrainCtx.fillStyle = currentBiome.soil;
-      terrainCtx.beginPath();
-      terrainCtx.moveTo(0, WORLD_HEIGHT);
-      terrainCtx.lineTo(0, heights[0]);
-      for (let x = 1; x < WORLD_WIDTH; x++) terrainCtx.lineTo(x, heights[x]);
-      terrainCtx.lineTo(WORLD_WIDTH, WORLD_HEIGHT);
-      terrainCtx.closePath();
-      terrainCtx.fill();
-
-      // Grass Edge
-      terrainCtx.strokeStyle = currentBiome.grass;
-      terrainCtx.lineWidth = 9;
-      terrainCtx.beginPath();
-      terrainCtx.moveTo(0, heights[0]);
-      for (let x = 1; x < WORLD_WIDTH; x++) terrainCtx.lineTo(x, heights[x]);
-      terrainCtx.stroke();
-
-      // Fill Collision Array
-      const imgData = terrainCtx.getImageData(0, 0, WORLD_WIDTH, WORLD_HEIGHT).data;
-      for (let y = 0; y < WORLD_HEIGHT; y++) {
-        for (let x = 0; x < WORLD_WIDTH; x++) {
-          if (imgData[(y * WORLD_WIDTH + x) * 4 + 3] > 64) {
-            terrainData[y * WORLD_WIDTH + x] = 1;
-          }
-        }
+        if (x < 140) h += (140 - x) * 3.5;
+        if (x > WORLD_WIDTH - 140) h += (x - (WORLD_WIDTH - 140)) * 3.5;
+        terrainHeights[x] = Math.min(WATER_LEVEL - 50, h);
       }
     }
 
     function isTerrainSolid(x, y) {
-      const ix = Math.floor(x), iy = Math.floor(y);
-      if (ix < 0 || ix >= WORLD_WIDTH || iy >= WORLD_HEIGHT || iy < 0) return false;
-      return terrainData[iy * WORLD_WIDTH + ix] === 1;
+      const ix = Math.floor(x);
+      if (ix < 0 || ix >= WORLD_WIDTH) return false;
+      return y >= terrainHeights[ix];
     }
 
     function destroyTerrainCircle(cx, cy, radius) {
-      terrainCtx.save();
-      terrainCtx.globalCompositeOperation = 'destination-out';
-      terrainCtx.beginPath();
-      terrainCtx.arc(cx, cy, radius, 0, Math.PI * 2);
-      terrainCtx.fill();
-      terrainCtx.restore();
-
-      const r2 = radius * radius;
       const minX = Math.max(0, Math.floor(cx - radius));
       const maxX = Math.min(WORLD_WIDTH - 1, Math.ceil(cx + radius));
-      const minY = Math.max(0, Math.floor(cy - radius));
-      const maxY = Math.min(WORLD_HEIGHT - 1, Math.ceil(cy + radius));
 
-      for (let y = minY; y <= maxY; y++) {
-        for (let x = minX; x <= maxX; x++) {
-          if ((x - cx)**2 + (y - cy)**2 <= r2) {
-            terrainData[y * WORLD_WIDTH + x] = 0;
-          }
+      for (let x = minX; x <= maxX; x++) {
+        const dx = x - cx;
+        const dyDist = Math.sqrt(Math.max(0, radius * radius - dx * dx));
+        const craterBottom = cy + dyDist;
+        if (terrainHeights[x] < craterBottom) {
+          terrainHeights[x] = Math.min(WATER_LEVEL + 50, Math.max(terrainHeights[x], craterBottom));
         }
       }
     }
 
-    /* WORM ENTITIES */
+    /* WORM CLASS */
     class Worm {
-      constructor(id, name, team, x, y) {
+      constructor(id, name, team, x) {
         this.id = id; this.name = name; this.team = team;
-        this.x = x; this.y = y; this.vx = 0; this.vy = 0;
-        this.hp = 100; this.maxHp = 100; this.radius = 9;
+        this.x = x; this.y = 100;
+        this.vx = 0; this.vy = 0;
+        this.hp = 100; this.maxHp = 100;
+        this.radius = 8;
         this.facingRight = team === 'red';
         this.aimAngle = team === 'red' ? -0.5 : -2.6;
-        this.isGrounded = false; this.isDead = false;
-        this.fuel = 100;
+        this.isGrounded = false;
+        this.isDead = false;
       }
 
       update() {
         if (this.isDead) return;
 
         this.vy += currentBiome.gravity;
-        this.vx *= currentBiome.friction;
+        this.vx *= 0.85;
 
-        let nextX = this.x + this.vx;
-        let nextY = this.y + this.vy;
+        this.x += this.vx;
+        this.y += this.vy;
 
-        if (nextY >= WATER_LEVEL) {
+        // Water death
+        if (this.y >= WATER_LEVEL) {
           this.hp = 0;
           this.isDead = true;
-          AudioEngine.play('splash');
-          createWaterSplash(this.x, WATER_LEVEL);
+          AudioEngine.play('explode');
           addFloatingText(this.x, this.y - 15, 'DROWNED!', '#f43f5e');
           return;
         }
 
-        if (this.vy > 0) {
-          if (isTerrainSolid(this.x, nextY + this.radius)) {
-            if (this.vy > 8.5) {
-              const fallDmg = Math.floor((this.vy - 7) * 9);
-              this.hp = Math.max(0, this.hp - fallDmg);
-              addScreenShake(fallDmg * 0.4);
-              AudioEngine.play('explode');
-              addFloatingText(this.x, this.y - 15, `-${fallDmg}`, '#ef4444');
-            }
-            this.vy = 0;
-            this.isGrounded = true;
-            this.fuel = 100;
-            while (isTerrainSolid(this.x, nextY + this.radius) && nextY > 0) nextY--;
-          } else {
-            this.isGrounded = false;
-          }
+        // Terrain Collision
+        const groundY = terrainHeights[Math.floor(this.x)] || WATER_LEVEL;
+        if (this.y + this.radius >= groundY) {
+          this.y = groundY - this.radius;
+          this.vy = 0;
+          this.isGrounded = true;
+        } else {
+          this.isGrounded = false;
         }
 
-        if (Math.abs(this.vx) > 0.05) {
-          const sign = Math.sign(this.vx);
-          if (isTerrainSolid(nextX + sign * this.radius, nextY)) {
-            let climb = 0;
-            while (climb < 6 && isTerrainSolid(nextX + sign * this.radius, nextY - climb)) climb++;
-            if (climb < 6) nextY -= climb;
-            else { this.vx = 0; nextX = this.x; }
-          }
-        }
-
-        this.x = Math.max(this.radius, Math.min(WORLD_WIDTH - this.radius, nextX));
-        this.y = nextY;
+        this.x = Math.max(this.radius, Math.min(WORLD_WIDTH - this.radius, this.x));
 
         if (this.hp <= 0 && !this.isDead) {
           this.isDead = true;
@@ -959,304 +508,142 @@
 
       jump() {
         if (!this.isGrounded || (turnPhase !== 'ACTION' && turnPhase !== 'RETREAT')) return;
-        this.vy = -6.0;
-        this.vx = (this.facingRight ? 1 : -1) * 2.8;
+        this.vy = -5.8;
+        this.vx = (this.facingRight ? 1 : -1) * 2.5;
         this.isGrounded = false;
         AudioEngine.play('jump');
       }
 
-      flyJetpack() {
-        if (this.fuel <= 0 || (turnPhase !== 'ACTION' && turnPhase !== 'RETREAT')) return;
-        this.vy = Math.max(-5.0, this.vy - 0.7);
-        this.fuel -= 1.2;
-        this.isGrounded = false;
-        AudioEngine.play('jetpack');
-        particles.push(new Particle(this.x + (this.facingRight ? -8 : 8), this.y + 4, (Math.random()-0.5)*2, Math.random()*3 + 1, '#f59e0b', 16));
-      }
-
       draw(ctx) {
-        if (this.isDead) {
-          ctx.fillStyle = '#64748b';
-          ctx.fillRect(this.x - 6, this.y - 14, 12, 16);
-          ctx.beginPath(); ctx.arc(this.x, this.y - 14, 6, Math.PI, 0); ctx.fill();
-          return;
-        }
+        if (this.isDead) return;
 
         ctx.save();
         ctx.translate(this.x, this.y);
 
+        // Name & Health
         ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#fff';
-        ctx.fillText(this.name, 0, -22);
+        ctx.fillText(this.name, 0, -20);
 
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(-15, -18, 30, 4);
+        ctx.fillRect(-15, -16, 30, 4);
         ctx.fillStyle = this.team === 'red' ? '#f43f5e' : '#0ea5e9';
-        ctx.fillRect(-15, -18, 30 * (this.hp / this.maxHp), 4);
+        ctx.fillRect(-15, -16, 30 * (this.hp / this.maxHp), 4);
 
+        // Turn Pointer Arrow
         if (this === activeWorm && (turnPhase === 'ACTION' || turnPhase === 'RETREAT')) {
           const bob = Math.sin(Date.now() * 0.008) * 4;
           ctx.fillStyle = this.team === 'red' ? '#f43f5e' : '#0ea5e9';
           ctx.beginPath();
-          ctx.moveTo(0, -28 + bob);
-          ctx.lineTo(-6, -38 + bob);
-          ctx.lineTo(6, -38 + bob);
+          ctx.moveTo(0, -26 + bob);
+          ctx.lineTo(-5, -34 + bob);
+          ctx.lineTo(5, -34 + bob);
           ctx.fill();
         }
 
+        // Worm Body
         ctx.fillStyle = this.team === 'red' ? '#fda4af' : '#93c5fd';
         ctx.beginPath();
-        ctx.arc(0, 0, 9, 0, Math.PI * 2);
-        ctx.arc(this.facingRight ? -5 : 5, 3, 7, 0, Math.PI * 2);
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.arc(this.facingRight ? -4 : 4, 3, 6, 0, Math.PI * 2);
         ctx.fill();
 
+        // Team Headband
         ctx.fillStyle = this.team === 'red' ? '#f43f5e' : '#0ea5e9';
-        ctx.fillRect(-7, -8, 14, 3);
+        ctx.fillRect(-6, -7, 12, 3);
 
+        // Aim Line
         if (this === activeWorm && turnPhase === 'ACTION' && selectedWeapon !== 'airstrike') {
-          const aimX = Math.cos(this.aimAngle) * 24;
-          const aimY = Math.sin(this.aimAngle) * 24;
+          const aimX = Math.cos(this.aimAngle) * 22;
+          const aimY = Math.sin(this.aimAngle) * 22;
           ctx.strokeStyle = '#fbbf24';
           ctx.lineWidth = 2;
           ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(aimX, aimY); ctx.stroke();
-          ctx.fillStyle = '#ef4444';
-          ctx.beginPath(); ctx.arc(aimX, aimY, 3.5, 0, Math.PI * 2); ctx.fill();
         }
 
         ctx.restore();
       }
     }
 
-    /* PROJECTILES */
+    /* PROJECTILE */
     class Projectile {
       constructor(type, x, y, vx, vy) {
         this.type = type;
         this.x = x; this.y = y; this.vx = vx; this.vy = vy;
-        this.radius = 5;
-        this.timer = type === 'grenade' ? 3.0 : type === 'holy' ? 2.8 : type === 'dynamite' ? 4.0 : type === 'cluster' ? 2.5 : 99;
+        this.timer = type === 'grenade' ? 3.0 : type === 'dynamite' ? 3.5 : 99;
         this.alive = true;
       }
 
       update(dt) {
         if (!this.alive) return;
-        this.vx += (this.type === 'bazooka' ? wind * 0.018 : 0);
-        this.vy += currentBiome.gravity * (this.type === 'bazooka' ? 0.8 : 1);
+        this.vx += (this.type === 'bazooka' ? wind * 0.015 : 0);
+        this.vy += currentBiome.gravity * 0.9;
 
         if (this.timer < 90) {
           this.timer -= dt;
           if (this.timer <= 0) { this.detonate(); return; }
         }
 
-        const steps = 4;
-        const dx = this.vx / steps;
-        const dy = this.vy / steps;
+        this.x += this.vx;
+        this.y += this.vy;
 
-        for (let s = 0; s < steps; s++) {
-          this.x += dx;
-          this.y += dy;
+        if (this.y >= WATER_LEVEL) {
+          this.alive = false;
+          AudioEngine.play('explode');
+          return;
+        }
 
-          if (this.y >= WATER_LEVEL) {
-            this.alive = false;
-            AudioEngine.play('splash');
-            createWaterSplash(this.x, WATER_LEVEL);
-            break;
-          }
-
-          if (isTerrainSolid(this.x, this.y)) {
-            if (['bazooka', 'cluster_shard', 'bomb'].includes(this.type)) {
-              this.detonate();
-              break;
-            } else {
-              this.vx *= -0.55; this.vy *= -0.45;
-              this.x -= dx * 2; this.y -= dy * 2;
-              break;
-            }
-          }
-
-          if (this.type === 'bazooka' || this.type === 'bomb') {
-            for (let w of worms) {
-              if (!w.isDead && Math.hypot(this.x - w.x, this.y - w.y) < w.radius + this.radius) {
-                this.detonate();
-                return;
-              }
-            }
+        if (isTerrainSolid(this.x, this.y)) {
+          if (this.type === 'grenade' || this.type === 'dynamite') {
+            this.vx *= -0.5; this.vy *= -0.4;
+            this.y = terrainHeights[Math.floor(this.x)] - 2;
+          } else {
+            this.detonate();
           }
         }
       }
 
       detonate() {
         this.alive = false;
-        if (this.type === 'bazooka') createExplosion(this.x, this.y, 48, 55);
+        if (this.type === 'bazooka') createExplosion(this.x, this.y, 45, 50);
         else if (this.type === 'grenade') createExplosion(this.x, this.y, 55, 60);
-        else if (this.type === 'dynamite') createExplosion(this.x, this.y, 80, 90);
-        else if (this.type === 'bomb') createExplosion(this.x, this.y, 50, 60);
-        else if (this.type === 'holy') createExplosion(this.x, this.y, 110, 100);
+        else if (this.type === 'dynamite') createExplosion(this.x, this.y, 75, 85);
+        else if (this.type === 'shotgun') createExplosion(this.x, this.y, 20, 30);
         else if (this.type === 'cluster') {
           createExplosion(this.x, this.y, 35, 30);
-          for (let i = 0; i < 5; i++) {
-            const ang = -Math.PI * 0.8 + i * 0.4;
-            projectiles.push(new Projectile('cluster_shard', this.x, this.y - 4, Math.cos(ang)*4.5, Math.sin(ang)*4.5));
+          for (let i = 0; i < 4; i++) {
+            const ang = -Math.PI * 0.8 + i * 0.5;
+            projectiles.push(new Projectile('shotgun', this.x, this.y - 4, Math.cos(ang)*4, Math.sin(ang)*4));
           }
-        } else if (this.type === 'cluster_shard') createExplosion(this.x, this.y, 25, 25);
+        }
       }
 
       draw(ctx) {
         if (!this.alive) return;
         ctx.save();
         ctx.translate(this.x, this.y);
-
-        if (this.type === 'bazooka' || this.type === 'bomb') {
-          ctx.rotate(Math.atan2(this.vy, this.vx));
-          ctx.fillStyle = '#64748b'; ctx.fillRect(-6, -3, 12, 6);
-          ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.moveTo(6, -4); ctx.lineTo(11, 0); ctx.lineTo(6, 4); ctx.fill();
-        } else if (this.type === 'holy') {
-          ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(0, 0, 7, 0, Math.PI * 2); ctx.fill();
-        } else {
-          ctx.fillStyle = this.type === 'dynamite' ? '#dc2626' : '#16a34a';
-          ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill();
-        }
-
+        ctx.fillStyle = this.type === 'bazooka' ? '#ef4444' : '#fbbf24';
+        ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
     }
 
-    class AirStrikeJet {
-      constructor(targetX) {
-        this.targetX = targetX;
-        this.x = targetX - 1000;
-        this.y = 80;
-        this.speed = 18;
-        this.dropped = 0;
-        this.alive = true;
-        AudioEngine.play('launch');
-      }
-
-      update() {
-        this.x += this.speed;
-        if (this.dropped < 4 && Math.abs(this.x - (this.targetX - 120 + this.dropped * 80)) < 25) {
-          projectiles.push(new Projectile('bomb', this.x, this.y + 10, 2, 4));
-          this.dropped++;
-        }
-        if (this.x > this.targetX + 1000) this.alive = false;
-      }
-
-      draw(ctx) {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.fillStyle = '#475569';
-        ctx.beginPath();
-        ctx.moveTo(30, 0); ctx.lineTo(-20, -12); ctx.lineTo(-10, 0); ctx.lineTo(-20, 12);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    /* FX & PARTICLES */
-    let particles = [], floatingTexts = [], airstrikes = [];
-
-    function createExplosion(x, y, radius, maxDamage) {
-      AudioEngine.play('explode');
-      destroyTerrainCircle(x, y, radius);
-      addScreenShake(radius * 0.25);
-
-      worms.forEach(w => {
-        if (w.isDead) return;
-        const dist = Math.hypot(w.x - x, w.y - y);
-        if (dist < radius + 20) {
-          const factor = Math.max(0, 1 - (dist / (radius + 20)));
-          const dmg = Math.floor(factor * maxDamage);
-          if (dmg > 0) {
-            w.hp = Math.max(0, w.hp - dmg);
-            addFloatingText(w.x, w.y - 15, `-${dmg}`, '#ef4444');
-          }
-          const angle = Math.atan2(w.y - y, w.x - x);
-          w.vx += Math.cos(angle) * factor * 13;
-          w.vy += Math.sin(angle) * factor * 13 - 3;
-          w.isGrounded = false;
-        }
-      });
-
-      for (let i = 0; i < 24; i++) {
-        const ang = Math.random() * Math.PI * 2;
-        const spd = Math.random() * 6 + 1;
-        particles.push(new Particle(x, y, Math.cos(ang)*spd, Math.sin(ang)*spd, '#f59e0b', 24));
-      }
-    }
-
-    function fireRailgun(aimAngle) {
-      if (!activeWorm) return;
-      AudioEngine.play('railgun');
-      addScreenShake(10);
-      const startX = activeWorm.x + Math.cos(aimAngle) * 16;
-      const startY = activeWorm.y + Math.sin(aimAngle) * 16;
-      const endX = startX + Math.cos(aimAngle) * 1500;
-      const endY = startY + Math.sin(aimAngle) * 1500;
-
-      worms.forEach(w => {
-        if (w !== activeWorm && !w.isDead) {
-          const dist = distToSegment({ x: w.x, y: w.y }, { x: startX, y: startY }, { x: endX, y: endY });
-          if (dist < 20) {
-            w.hp = Math.max(0, w.hp - 45);
-            w.vx += Math.cos(aimAngle) * 12;
-            w.vy += Math.sin(aimAngle) * 12 - 2;
-            w.isGrounded = false;
-            addFloatingText(w.x, w.y - 15, '-45', '#0ea5e9');
-          }
-        }
-      });
-
-      for (let d = 0; d < 1200; d += 20) {
-        particles.push(new Particle(startX + Math.cos(aimAngle)*d, startY + Math.sin(aimAngle)*d, (Math.random()-0.5)*2, (Math.random()-0.5)*2, '#0ea5e9', 14));
-      }
-
-      turnPhase = 'PROJECTILE';
-      setTimeout(() => { turnPhase = 'RETREAT'; turnTimer = 4; }, 1000);
-    }
-
-    function distToSegment(p, v, w) {
-      const l2 = (v.x - w.x)**2 + (v.y - w.y)**2;
-      if (l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
-      let t = Math.max(0, Math.min(1, ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2));
-      return Math.hypot(p.x - (v.x + t * (w.x - v.x)), p.y - (v.y + t * (w.y - v.y)));
-    }
-
-    function createWaterSplash(x, y) {
-      for (let i = 0; i < 18; i++) {
-        particles.push(new Particle(x, y, (Math.random()-0.5)*5, -Math.random()*5, currentBiome.waterColor, 22));
-      }
-    }
-
-    class Particle {
-      constructor(x, y, vx, vy, color, life) {
-        this.x = x; this.y = y; this.vx = vx; this.vy = vy; this.color = color; this.life = life; this.maxLife = life;
-      }
-      update() { this.x += this.vx; this.y += this.vy; this.vy += 0.1; this.life--; }
-      draw(ctx) {
-        ctx.fillStyle = this.color;
-        ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
-        ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1.0;
-      }
-    }
-
-    function addFloatingText(x, y, text, color) { floatingTexts.push({ x, y, text, color, life: 35 }); }
-    function addScreenShake(amt) { screenShake = Math.min(20, screenShake + amt); }
-
-    /* MATCH ENGINE */
-    let worms = [], projectiles = [];
+    /* GAME ENGINE & PARTICLES */
+    let worms = [], projectiles = [], floatingTexts = [];
     let currentTeam = 'red', activeWorm = null, activeWormIndex = { red: 0, blue: 0 };
     let turnTimer = 30, turnPhase = 'ACTION', wind = 0, selectedWeapon = 'bazooka';
+    let isVsBot = false;
+
     let isChargingPower = false, currentPower = 0, chargeDirection = 1;
     const keys = { left: false, right: false, up: false, down: false, fire: false };
 
     function initSquads() {
       worms = [
-        new Worm('r1', 'Bogdan', 'red', 350, 100),
-        new Worm('r2', 'Viper', 'red', 650, 100),
-        new Worm('b1', 'Glitch', 'blue', WORLD_WIDTH - 650, 100),
-        new Worm('b2', 'Shadow', 'blue', WORLD_WIDTH - 350, 100)
+        new Worm('r1', 'Bogdan', 'red', 400),
+        new Worm('r2', 'Viper', 'red', 700),
+        new Worm('b1', 'Glitch', 'blue', WORLD_WIDTH - 700),
+        new Worm('b2', 'Shadow', 'blue', WORLD_WIDTH - 400)
       ];
       activeWormIndex = { red: 0, blue: 0 };
       currentTeam = 'red';
@@ -1272,18 +659,70 @@
 
       cameraX = activeWorm.x - viewWidth / 2;
       cameraY = activeWorm.y - viewHeight / 2;
+
+      // Bot AI Turn
+      if (isVsBot && currentTeam === 'blue') {
+        setTimeout(runBotAI, 1200);
+      }
     }
 
-    function startMatch(asHost) {
+    function runBotAI() {
+      if (!activeWorm || activeWorm.isDead || turnPhase !== 'ACTION') return;
+      const target = worms.find(w => w.team === 'red' && !w.isDead);
+      if (!target) return;
+
+      const dx = target.x - activeWorm.x;
+      const dy = target.y - activeWorm.y;
+      activeWorm.aimAngle = Math.atan2(dy, dx);
+      activeWorm.facingRight = dx > 0;
+
+      setTimeout(() => {
+        const dist = Math.hypot(dx, dy);
+        const power = Math.min(100, Math.max(30, (dist / 800) * 100));
+        fireWeapon(power, activeWorm.aimAngle, 'bazooka');
+      }, 800);
+    }
+
+    function createExplosion(x, y, radius, maxDamage) {
+      AudioEngine.play('explode');
+      destroyTerrainCircle(x, y, radius);
+
+      worms.forEach(w => {
+        if (w.isDead) return;
+        const dist = Math.hypot(w.x - x, w.y - y);
+        if (dist < radius + 15) {
+          const factor = Math.max(0, 1 - (dist / (radius + 15)));
+          const dmg = Math.floor(factor * maxDamage);
+          if (dmg > 0) {
+            w.hp = Math.max(0, w.hp - dmg);
+            addFloatingText(w.x, w.y - 15, `-${dmg}`, '#ef4444');
+          }
+          const angle = Math.atan2(w.y - y, w.x - x);
+          w.vx += Math.cos(angle) * factor * 10;
+          w.vy += Math.sin(angle) * factor * 10 - 2;
+          w.isGrounded = false;
+        }
+      });
+    }
+
+    function addFloatingText(x, y, text, color) { floatingTexts.push({ x, y, text, color, life: 35 }); }
+
+    function startLocalGame() {
+      isVsBot = false;
+      document.getElementById('lobby-modal').style.display = 'none';
+      startMatch();
+    }
+
+    function startVsBot() {
+      isVsBot = true;
+      document.getElementById('lobby-modal').style.display = 'none';
+      startMatch();
+    }
+
+    function startMatch() {
       const biomeKey = document.getElementById('biome-selector').value;
-      const seed = Math.random();
-      generateTerrain(seed, biomeKey);
+      generateTerrain(biomeKey);
       initSquads();
-
-      if (isMultiplayer && asHost) {
-        sendNet({ type: 'START_SYNC', seed, biomeKey });
-      }
-
       turnPhase = 'ACTION';
       turnTimer = 30;
     }
@@ -1301,74 +740,32 @@
       }
 
       currentTeam = currentTeam === 'red' ? 'blue' : 'red';
-      wind = Math.floor(Math.random() * 11) - 5;
+      wind = Math.floor(Math.random() * 9) - 4;
+      document.getElementById('wind-indicator').innerText = `💨 Wind: ${wind}`;
       turnTimer = 30;
       turnPhase = 'ACTION';
       pickNextActiveWorm();
-
-      if (isMultiplayer && isHost) {
-        sendNet({ type: 'TURN_CHANGE', nextTeam: currentTeam, wind });
-      }
     }
 
-    function fireWeapon(power, aimAngle, weaponType, targetX) {
+    function fireWeapon(power, aimAngle, weaponType) {
       if (!activeWorm) return;
 
-      if (weaponType === 'airstrike') {
-        airstrikes.push(new AirStrikeJet(targetX || activeWorm.x));
-        turnPhase = 'PROJECTILE';
-      } else if (weaponType === 'railgun') {
-        fireRailgun(aimAngle);
-      } else {
-        const p = (power / 100) * 16 + 2;
-        const vx = Math.cos(aimAngle) * p;
-        const vy = Math.sin(aimAngle) * p;
-        const sx = activeWorm.x + Math.cos(aimAngle) * 16;
-        const sy = activeWorm.y + Math.sin(aimAngle) * 16;
-        projectiles.push(new Projectile(weaponType, sx, sy, vx, vy));
-        AudioEngine.play('launch');
-        turnPhase = 'PROJECTILE';
-      }
+      const p = (power / 100) * 15 + 2;
+      const vx = Math.cos(aimAngle) * p;
+      const vy = Math.sin(aimAngle) * p;
+      const sx = activeWorm.x + Math.cos(aimAngle) * 14;
+      const sy = activeWorm.y + Math.sin(aimAngle) * 14;
 
+      projectiles.push(new Projectile(weaponType, sx, sy, vx, vy));
+      AudioEngine.play('launch');
+      turnPhase = 'PROJECTILE';
       document.getElementById('power-meter-container').style.display = 'none';
-
-      if (canControl()) {
-        sendNet({ type: 'FIRE', power, aimAngle, weaponType, targetX });
-      }
-    }
-
-    function handleNetworkPacket(pkg) {
-      if (pkg.type === 'START_SYNC') {
-        generateTerrain(pkg.seed, pkg.biomeKey);
-        initSquads();
-      } else if (pkg.type === 'WORM_SYNC') {
-        if (activeWorm && !canControl()) {
-          activeWorm.x = pkg.x; activeWorm.y = pkg.y;
-          activeWorm.aimAngle = pkg.aimAngle;
-          activeWorm.facingRight = pkg.facingRight;
-        }
-      } else if (pkg.type === 'FIRE') {
-        fireWeapon(pkg.power, pkg.aimAngle, pkg.weaponType, pkg.targetX);
-      } else if (pkg.type === 'WEAPON_SELECT') {
-        selectedWeapon = pkg.weapon;
-      } else if (pkg.type === 'TURN_CHANGE') {
-        currentTeam = pkg.nextTeam; wind = pkg.wind;
-        turnTimer = 30; turnPhase = 'ACTION';
-        pickNextActiveWorm();
-      }
-    }
-
-    function canControl() {
-      if (!isMultiplayer) return true;
-      return currentTeam === myTeam;
     }
 
     function selectWeapon(wpn) {
-      if (!canControl()) return;
       selectedWeapon = wpn;
       document.querySelectorAll('.wpn-btn').forEach(b => b.classList.remove('active'));
       event.currentTarget.classList.add('active');
-      if (isMultiplayer) sendNet({ type: 'WEAPON_SELECT', weapon: wpn });
     }
 
     function openDonateModal() { document.getElementById('donate-modal').style.display = 'flex'; }
@@ -1376,36 +773,26 @@
     function openLobbyModal() { document.getElementById('lobby-modal').style.display = 'flex'; }
     function restartMatch() {
       document.getElementById('gameover-modal').style.display = 'none';
-      startMatch(isHost);
+      startMatch();
     }
 
-    /* CONTROLS */
+    /* INPUTS */
     window.addEventListener('keydown', e => {
-      if (document.activeElement === document.getElementById('chat-input')) return;
-      if (!canControl() || turnPhase !== 'ACTION') return;
+      if (turnPhase !== 'ACTION') return;
       if (e.key === 'a' || e.key === 'ArrowLeft') keys.left = true;
       if (e.key === 'd' || e.key === 'ArrowRight') keys.right = true;
       if (e.key === 'w' || e.key === 'ArrowUp') keys.up = true;
       if (e.key === 's' || e.key === 'ArrowDown') keys.down = true;
       if (e.key === 'Shift') activeWorm?.jump();
-      if (e.key === 'e' || e.key === 'f') activeWorm?.flyJetpack();
       if (e.key === ' ' && !keys.fire) { keys.fire = true; startCharging(); }
     });
 
     window.addEventListener('keyup', e => {
-      if (document.activeElement === document.getElementById('chat-input')) return;
-      if (!canControl()) return;
       if (e.key === 'a' || e.key === 'ArrowLeft') keys.left = false;
       if (e.key === 'd' || e.key === 'ArrowRight') keys.right = false;
       if (e.key === 'w' || e.key === 'ArrowUp') keys.up = false;
       if (e.key === 's' || e.key === 'ArrowDown') keys.down = false;
       if (e.key === ' ' && keys.fire) { keys.fire = false; releaseCharge(); }
-    });
-
-    document.getElementById('viewport-container').addEventListener('click', e => {
-      if (!canControl() || turnPhase !== 'ACTION' || selectedWeapon !== 'airstrike') return;
-      const targetWorldX = e.clientX + cameraX;
-      fireWeapon(100, 0, 'airstrike', targetWorldX);
     });
 
     function bindTouch(id, onStart, onEnd) {
@@ -1414,18 +801,15 @@
       el.addEventListener('touchend', e => { e.preventDefault(); onEnd(); });
     }
 
-    bindTouch('btn-left', () => { if(canControl()) keys.left = true; }, () => keys.left = false);
-    bindTouch('btn-right', () => { if(canControl()) keys.right = true; }, () => keys.right = false);
-    bindTouch('btn-up', () => { if(canControl()) keys.up = true; }, () => keys.up = false);
-    bindTouch('btn-down', () => { if(canControl()) keys.down = true; }, () => keys.down = false);
-    bindTouch('btn-jump', () => { if(canControl()) activeWorm?.jump(); }, () => {});
-    bindTouch('btn-fire', () => { if(canControl()) startCharging(); }, () => { if(canControl()) releaseCharge(); });
+    bindTouch('btn-left', () => keys.left = true, () => keys.left = false);
+    bindTouch('btn-right', () => keys.right = true, () => keys.right = false);
+    bindTouch('btn-up', () => keys.up = true, () => keys.up = false);
+    bindTouch('btn-down', () => keys.down = true, () => keys.down = false);
+    bindTouch('btn-jump', () => activeWorm?.jump(), () => {});
+    bindTouch('btn-fire', () => startCharging(), () => releaseCharge());
 
     function startCharging() {
-      if (turnPhase !== 'ACTION' || selectedWeapon === 'airstrike' || selectedWeapon === 'railgun') {
-        if (selectedWeapon === 'railgun') fireWeapon(100, activeWorm.aimAngle, 'railgun');
-        return;
-      }
+      if (turnPhase !== 'ACTION') return;
       isChargingPower = true; currentPower = 0; chargeDirection = 1;
       document.getElementById('power-meter-container').style.display = 'block';
     }
@@ -1436,7 +820,6 @@
       fireWeapon(currentPower, activeWorm.aimAngle, selectedWeapon);
     }
 
-    /* RESIZING */
     function resizeCanvas() {
       viewWidth = window.innerWidth;
       viewHeight = window.innerHeight;
@@ -1444,30 +827,19 @@
       gameCanvas.height = viewHeight;
     }
 
-    /* GAME LOOP */
+    /* MAIN GAME LOOP */
     let lastTime = performance.now();
-    let secTimer = 0, syncTimer = 0;
+    let secTimer = 0;
 
     function gameLoop(now) {
       const dt = Math.min(0.1, (now - lastTime) / 1000);
       lastTime = now;
 
-      if (activeWorm && !activeWorm.isDead && canControl()) {
+      if (activeWorm && !activeWorm.isDead) {
         if (keys.left) activeWorm.walk(-1);
         if (keys.right) activeWorm.walk(1);
         if (keys.up) activeWorm.aimAngle = Math.max(-Math.PI * 0.95, activeWorm.aimAngle - 0.04);
         if (keys.down) activeWorm.aimAngle = Math.min(0.2, activeWorm.aimAngle + 0.04);
-
-        if (isMultiplayer) {
-          syncTimer += dt;
-          if (syncTimer > 0.05) {
-            syncTimer = 0;
-            sendNet({
-              type: 'WORM_SYNC', x: activeWorm.x, y: activeWorm.y,
-              aimAngle: activeWorm.aimAngle, facingRight: activeWorm.facingRight
-            });
-          }
-        }
       }
 
       if (isChargingPower) {
@@ -1493,23 +865,15 @@
       worms.forEach(w => w.update());
       projectiles.forEach(p => p.update(dt));
       projectiles = projectiles.filter(p => p.alive);
-      airstrikes.forEach(a => a.update());
-      airstrikes = airstrikes.filter(a => a.alive);
 
-      if (turnPhase === 'PROJECTILE' && projectiles.length === 0 && airstrikes.length === 0) {
+      if (turnPhase === 'PROJECTILE' && projectiles.length === 0) {
         if (!worms.some(w => Math.hypot(w.vx, w.vy) > 0.4)) {
           turnPhase = 'RETREAT';
-          turnTimer = 4;
+          turnTimer = 3;
         }
       }
 
-      particles.forEach(p => p.update());
-      particles = particles.filter(p => p.life > 0);
-
-      if (screenShake > 0) screenShake = Math.max(0, screenShake - 0.5);
-      const shakeX = (Math.random() - 0.5) * screenShake * 2;
-      const shakeY = (Math.random() - 0.5) * screenShake * 2;
-
+      // Camera Tracking
       if (projectiles.length > 0) {
         cameraX += (projectiles[0].x - viewWidth / 2 - cameraX) * 0.1;
         cameraY += (projectiles[0].y - viewHeight / 2 - cameraY) * 0.1;
@@ -1518,34 +882,47 @@
         cameraY += (activeWorm.y - viewHeight / 2 - cameraY) * 0.08;
       }
 
-      cameraX = Math.max(0, Math.min(WORLD_WIDTH - viewWidth, cameraX)) + shakeX;
-      cameraY = Math.max(0, Math.min(WORLD_HEIGHT - viewHeight, cameraY)) + shakeY;
+      cameraX = Math.max(0, Math.min(WORLD_WIDTH - viewWidth, cameraX));
+      cameraY = Math.max(0, Math.min(WORLD_HEIGHT - viewHeight, cameraY));
 
-      /* RENDERING */
+      /* RENDER */
       gameCtx.clearRect(0, 0, viewWidth, viewHeight);
 
-      // Draw Sky Gradient
-      const grad = gameCtx.createLinearGradient(0, 0, 0, viewHeight);
-      grad.addColorStop(0, currentBiome.sky[0]);
-      grad.addColorStop(0.6, currentBiome.sky[1]);
-      grad.addColorStop(1, currentBiome.sky[2]);
-      gameCtx.fillStyle = grad;
+      // Sky Background
+      gameCtx.fillStyle = '#0f172a';
       gameCtx.fillRect(0, 0, viewWidth, viewHeight);
-
-      // Draw Terrain
-      gameCtx.drawImage(terrainCanvas, cameraX, cameraY, viewWidth, viewHeight, 0, 0, viewWidth, viewHeight);
 
       gameCtx.save();
       gameCtx.translate(-cameraX, -cameraY);
 
+      // Draw Heightmap Polygon Terrain
+      gameCtx.fillStyle = currentBiome.soil;
+      gameCtx.beginPath();
+      gameCtx.moveTo(0, WORLD_HEIGHT);
+      gameCtx.lineTo(0, terrainHeights[0]);
+      for (let x = 1; x < WORLD_WIDTH; x++) {
+        gameCtx.lineTo(x, terrainHeights[x]);
+      }
+      gameCtx.lineTo(WORLD_WIDTH, WORLD_HEIGHT);
+      gameCtx.closePath();
+      gameCtx.fill();
+
+      // Grass Top Line
+      gameCtx.strokeStyle = currentBiome.grass;
+      gameCtx.lineWidth = 6;
+      gameCtx.beginPath();
+      gameCtx.moveTo(0, terrainHeights[0]);
+      for (let x = 1; x < WORLD_WIDTH; x++) {
+        gameCtx.lineTo(x, terrainHeights[x]);
+      }
+      gameCtx.stroke();
+
       // Water Layer
-      gameCtx.fillStyle = currentBiome.waterColor;
-      gameCtx.fillRect(0, WATER_LEVEL + Math.sin(now * 0.003) * 5, WORLD_WIDTH, WORLD_HEIGHT - WATER_LEVEL);
+      gameCtx.fillStyle = currentBiome.water;
+      gameCtx.fillRect(0, WATER_LEVEL + Math.sin(now * 0.003) * 4, WORLD_WIDTH, WORLD_HEIGHT - WATER_LEVEL);
 
       worms.forEach(w => w.draw(gameCtx));
       projectiles.forEach(p => p.draw(gameCtx));
-      airstrikes.forEach(a => a.draw(gameCtx));
-      particles.forEach(p => p.draw(gameCtx));
 
       floatingTexts.forEach(ft => {
         gameCtx.font = 'bold 12px sans-serif';
@@ -1570,9 +947,8 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       resizeCanvas();
-      generateTerrain(0.5, 'classic');
+      generateTerrain('classic');
       initSquads();
-      initGlobalChat();
       requestAnimationFrame(gameLoop);
     });
   </script>
