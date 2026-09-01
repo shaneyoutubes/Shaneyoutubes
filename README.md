@@ -1,797 +1,494 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Idle FarmVille Classic</title>
-<style>
-  :root {
-    --bg-grass: #7cb342;
-    --soil: #6d4c41;
-    --soil-wet: #4e342e;
-    --soil-ready: #8d6e63;
-    --panel-bg: #fffde7;
-    --accent: #fbc02d;
-    --text: #2e3440;
-    --btn-border: #4e342e;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realm of Mastery - Idle RPG</title>
+  <style>
+    :root {
+      --bg-main: #0c0e14;
+      --bg-panel: #161922;
+      --bg-card: #1f2330;
+      --bg-hover: #2a2f42;
+      --border: #2d3345;
+      --text-main: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent-gold: #f59e0b;
+      --accent-green: #10b981;
+      --accent-blue: #3b82f6;
+      --accent-red: #ef4444;
+      --accent-purple: #8b5cf6;
+      --font-pixel: 'Courier New', Courier, monospace;
+    }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg-grass);
-    color: var(--text);
-    padding: 16px;
-    display: flex;
-    justify-content: center;
-  }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
 
-  #game-container {
-    width: 100%;
-    max-width: 1200px;
-    background: #aed581;
-    border: 6px solid var(--soil);
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  }
+    /* Layout */
+    #sidebar {
+      width: 280px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
 
-  /* Header / Stats */
-  header {
-    background: var(--panel-bg);
-    border: 3px solid var(--soil);
-    border-radius: 8px;
-    padding: 12px 20px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 1.1rem;
-    font-weight: bold;
-  }
+    #main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background: radial-gradient(circle at top right, #1a2035, var(--bg-main));
+    }
 
-  .stat-group { display: flex; gap: 20px; align-items: center; }
-  .stat { display: flex; align-items: center; gap: 6px; }
-  .xp-bar-container {
-    width: 140px;
-    height: 16px;
-    background: #ccc;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #777;
-  }
-  .xp-bar-fill {
-    height: 100%;
-    width: 0%;
-    background: #00bcd4;
-    transition: width 0.3s ease;
-  }
+    /* Sidebar Header */
+    .brand {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand h1 { font-size: 1.1rem; color: var(--accent-gold); font-weight: 800; letter-spacing: 0.5px; }
+    .gold-counter { font-size: 0.95rem; font-weight: bold; color: var(--accent-gold); }
 
-  /* Main Layout */
-  .main-layout {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 16px;
-  }
+    /* Nav Buttons */
+    .nav-tabs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .nav-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover { background: var(--bg-hover); color: var(--text-main); }
+    .nav-btn.active {
+      background: var(--bg-card);
+      border-color: var(--border);
+      color: var(--accent-blue);
+      font-weight: bold;
+    }
+    .nav-btn .skill-lvl {
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--text-main);
+    }
 
-  @media (max-width: 900px) {
-    .main-layout { grid-template-columns: 1fr; }
-  }
+    /* Active Task Bar */
+    #current-action-bar {
+      padding: 14px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+    }
+    .action-info { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px; }
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: #0f1118;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill { height: 100%; width: 0%; background: var(--accent-green); transition: width 0.05s linear; }
 
-  /* Farm Grid */
-  .section-title {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    color: #3e2723;
-  }
+    /* Content Views */
+    .view-panel { padding: 24px; display: none; }
+    .view-panel.active { display: block; }
+    .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
 
-  .farm-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
-    background: #81c784;
-    padding: 16px;
-    border-radius: 8px;
-    border: 3px solid #558b2f;
-    min-height: 400px;
-  }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .card:hover { transform: translateY(-2px); border-color: var(--accent-blue); }
+    .card-header { display: flex; justify-content: space-between; align-items: center; }
+    .card-title { font-weight: bold; font-size: 1rem; }
+    .card-req { font-size: 0.75rem; color: var(--accent-red); }
+    .card-req.met { color: var(--accent-green); }
 
-  .tile {
-    aspect-ratio: 1;
-    background: var(--soil);
-    border-radius: 8px;
-    border: 3px solid #4e342e;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px;
-    cursor: pointer;
-    position: relative;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
-    transition: transform 0.1s;
-  }
+    .btn {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: opacity 0.2s;
+    }
+    .btn:hover:not(:disabled) { opacity: 0.9; }
+    .btn:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+    .btn-danger { background: var(--accent-red); }
 
-  .tile:active { transform: scale(0.96); }
-  .tile.empty { background: #5d4037; opacity: 0.9; }
-  .tile.growing { background: var(--soil-wet); }
-  .tile.ready {
-    background: var(--soil-ready);
-    border-color: #ffd600;
-    box-shadow: 0 0 12px #ffd600;
-  }
+    /* Inventory Grid */
+    .inv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+      gap: 8px;
+      background: var(--bg-card);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      max-height: 480px;
+      overflow-y: auto;
+    }
+    .inv-slot {
+      aspect-ratio: 1;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+      font-size: 1.5rem;
+    }
+    .inv-slot:hover { border-color: var(--accent-gold); background: var(--bg-hover); }
+    .inv-count {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 1px 1px 2px #000;
+      font-family: var(--font-pixel);
+    }
 
-  .tile-icon { font-size: 2rem; margin-top: 4px; }
-  .tile-timer {
-    font-size: 0.75rem;
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-  .tile-name { font-size: 0.75rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; }
+    /* Combat View */
+    .combat-arena {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 20px;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 16px;
+    }
+    .fighter-box { text-align: center; display: flex; flex-direction: column; gap: 8px; }
+    .fighter-sprite { font-size: 4rem; margin-bottom: 8px; }
+    .health-bar-bg { width: 100%; height: 14px; background: #0f1118; border-radius: 7px; overflow: hidden; }
+    .health-fill { height: 100%; width: 100%; background: var(--accent-red); transition: width 0.15s ease-out; }
+    .combat-log {
+      height: 140px;
+      background: #0f1118;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-y: auto;
+      font-family: var(--font-pixel);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .log-hit-player { color: #f87171; }
+    .log-hit-enemy { color: #4ade80; }
+    .log-loot { color: var(--accent-gold); font-weight: bold; }
 
-  /* Side Panels */
-  .side-panels {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
+    /* Equipment Screen */
+    .equipment-view {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 20px;
+    }
+    .gear-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      background: var(--bg-card);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .gear-slot {
+      aspect-ratio: 1;
+      background: var(--bg-panel);
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.4rem;
+    }
+    .gear-slot.filled { border-style: solid; border-color: var(--accent-blue); }
 
-  .panel {
-    background: var(--panel-bg);
-    border: 3px solid var(--soil);
-    border-radius: 8px;
-    padding: 12px;
-  }
+    /* Notification Modal */
+    #offline-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-box {
+      background: var(--bg-panel);
+      border: 1px solid var(--accent-gold);
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 440px;
+      width: 90%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
 
-  .panel-tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 12px;
-  }
-
-  .tab-btn {
-    flex: 1;
-    padding: 8px 4px;
-    border: 2px solid var(--btn-border);
-    background: #ffecb3;
-    cursor: pointer;
-    font-weight: bold;
-    border-radius: 4px;
-    font-size: 0.85rem;
-  }
-
-  .tab-btn.active {
-    background: var(--accent);
-  }
-
-  .tab-content { display: none; }
-  .tab-content.active { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto; }
-
-  /* Item Cards */
-  .card {
-    background: #fff;
-    border: 2px solid #ccc;
-    border-radius: 6px;
-    padding: 8px 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .card-info h4 { font-size: 0.95rem; }
-  .card-info p { font-size: 0.75rem; color: #555; }
-  .card-btn {
-    padding: 6px 12px;
-    border: 2px solid var(--btn-border);
-    background: #8bc34a;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    transition: background 0.2s;
-  }
-
-  .card-btn:disabled {
-    background: #bdbdbd;
-    cursor: not-allowed;
-  }
-
-  .card-btn:not(:disabled):hover {
-    background: #7cb342;
-  }
-
-  /* Selection Indicator */
-  .selected-tool {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #ffe082;
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 2px dashed #ff8f00;
-    margin-bottom: 8px;
-    font-weight: bold;
-    font-size: 0.9rem;
-  }
-
-  /* Log output */
-  .log-box {
-    background: #37474f;
-    color: #eceff1;
-    font-family: monospace;
-    font-size: 0.75rem;
-    padding: 8px;
-    border-radius: 4px;
-    height: 80px;
-    overflow-y: auto;
-  }
-
-  /* Notifications */
-  .offline-modal {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  .modal-box {
-    background: var(--panel-bg);
-    border: 4px solid var(--soil);
-    padding: 24px;
-    border-radius: 12px;
-    max-width: 400px;
-    text-align: center;
-  }
-  .modal-btn {
-    margin-top: 16px;
-    padding: 8px 24px;
-    background: var(--accent);
-    border: 2px solid var(--soil);
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 6px;
-  }
-</style>
+    /* Responsive */
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      #sidebar { width: 100%; height: auto; max-height: 200px; }
+      .equipment-view { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-<div id="game-container">
-  <header>
-    <div class="stat-group">
-      <div class="stat">💰 <span id="stat-coins">100</span></div>
-      <div class="stat">⭐ Lvl <span id="stat-level">1</span></div>
-      <div class="stat">
-        <div class="xp-bar-container" title="Experience">
-          <div class="xp-bar-fill" id="xp-bar"></div>
-        </div>
-        <span id="stat-xp" style="font-size: 0.8rem; margin-left: 4px;">0/100</span>
+  <div id="sidebar">
+    <div class="brand">
+      <h1>⚔️ REALM OF MASTERY</h1>
+      <div class="gold-counter">🪙 <span id="gold-display">0</span></div>
+    </div>
+    
+    <div class="nav-tabs" id="nav-container">
+      <button class="nav-btn active" onclick="switchTab('woodcutting')">🪓 Woodcutting <span class="skill-lvl" id="lvl-woodcutting">Lv 1</span></button>
+      <button class="nav-btn" onclick="switchTab('mining')">⛏️ Mining <span class="skill-lvl" id="lvl-mining">Lv 1</span></button>
+      <button class="nav-btn" onclick="switchTab('fishing')">🎣 Fishing <span class="skill-lvl" id="lvl-fishing">Lv 1</span></button>
+      <button class="nav-btn" onclick="switchTab('smelting')">🔥 Smelting & Smithing <span class="skill-lvl" id="lvl-smithing">Lv 1</span></button>
+      <button class="nav-btn" onclick="switchTab('cooking')">🍳 Cooking <span class="skill-lvl" id="lvl-cooking">Lv 1</span></button>
+      <button class="nav-btn" onclick="switchTab('combat')">⚔️ Combat Dungeon <span class="skill-lvl" id="lvl-combat">Lv 3</span></button>
+      <button class="nav-btn" onclick="switchTab('inventory')">🎒 Inventory & Gear</button>
+      <button class="nav-btn" onclick="switchTab('settings')">⚙️ Settings & Save</button>
+    </div>
+
+    <div id="current-action-bar">
+      <div class="action-info">
+        <span id="active-action-name" style="font-weight: 600;">Idle</span>
+        <span id="active-action-timer" style="color: var(--text-muted);">0.0s</span>
       </div>
-    </div>
-    <div class="stat-group">
-      <button class="tab-btn" onclick="Game.saveGame()" style="padding: 4px 10px;">💾 Save</button>
-      <button class="tab-btn" onclick="Game.resetGame()" style="padding: 4px 10px; background: #ffab91;">🔄 Reset</button>
-    </div>
-  </header>
-
-  <div class="main-layout">
-    <div style="display:flex; flex-direction: column; gap: 8px;">
-      <div class="selected-tool">
-        <span>Active Seed: <span id="current-selected-crop">Wheat</span></span>
-        <button class="card-btn" onclick="Game.harvestAll()" style="background:#ffca28;">🌾 Harvest All Ready</button>
-      </div>
-
-      <div class="farm-grid" id="farm-grid">
-        </div>
-
-      <div class="log-box" id="game-log"></div>
-    </div>
-
-    <div class="side-panels">
-      <div class="panel">
-        <div class="panel-tabs">
-          <button class="tab-btn active" onclick="Game.switchTab('crops')">🌱 Crops</button>
-          <button class="tab-btn" onclick="Game.switchTab('animals')">🐔 Animals</button>
-          <button class="tab-btn" onclick="Game.switchTab('upgrades')">⚙️ Upgrades</button>
-        </div>
-
-        <div id="tab-crops" class="tab-content active"></div>
-
-        <div id="tab-animals" class="tab-content"></div>
-
-        <div id="tab-upgrades" class="tab-content"></div>
+      <div class="progress-track">
+        <div class="progress-fill" id="action-progress"></div>
       </div>
     </div>
   </div>
-</div>
 
-<div id="offline-modal" class="offline-modal">
-  <div class="modal-box">
-    <h2>Welcome Back, Farmer!</h2>
-    <p style="margin-top: 10px;" id="offline-summary">While you were away, your farm produced goods.</p>
-    <button class="modal-btn" onclick="document.getElementById('offline-modal').style.display='none'">Collect & Continue</button>
+  <div id="main-content">
+    
+    <div id="view-woodcutting" class="view-panel active">
+      <h2>🪓 Woodcutting</h2>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Chop trees to gather wood for fuel, construction, and upgrades.</p>
+      <div class="grid-cards" id="wc-grid"></div>
+    </div>
+
+    <div id="view-mining" class="view-panel">
+      <h2>⛏️ Mining</h2>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Extract ores and gems from the deep earth to smelt into metal bars.</p>
+      <div class="grid-cards" id="mining-grid"></div>
+    </div>
+
+    <div id="view-fishing" class="view-panel">
+      <h2>🎣 Fishing</h2>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Catch raw fish from rivers and oceans to sustain your combat adventures.</p>
+      <div class="grid-cards" id="fishing-grid"></div>
+    </div>
+
+    <div id="view-smelting" class="view-panel">
+      <h2>🔥 Smelting & Forging</h2>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Refine raw ore into bars and forge weapons & armor.</p>
+      <div class="grid-cards" id="smithing-grid"></div>
+    </div>
+
+    <div id="view-cooking" class="view-panel">
+      <h2>🍳 Cooking Fire</h2>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Cook raw meat and fish to restore HP in combat.</p>
+      <div class="grid-cards" id="cooking-grid"></div>
+    </div>
+
+    <div id="view-combat" class="view-panel">
+      <h2>⚔️ Dungeon Exploration</h2>
+      <p style="color:var(--text-muted); font-size:0.9rem;">Fight monsters for rare items, gems, and combat mastery.</p>
+      
+      <div class="combat-arena">
+        <div class="fighter-box">
+          <div class="fighter-sprite">🧙‍♂️</div>
+          <h3 id="player-name">Player</h3>
+          <div class="health-bar-bg"><div id="player-hp-bar" class="health-fill"></div></div>
+          <div style="font-size:0.85rem;" id="player-hp-text">100 / 100 HP</div>
+        </div>
+
+        <div style="text-align:center; font-weight:800; color:var(--accent-red); font-size:1.4rem;">VS</div>
+
+        <div class="fighter-box">
+          <div class="fighter-sprite" id="enemy-sprite">👾</div>
+          <h3 id="enemy-name">None Selected</h3>
+          <div class="health-bar-bg"><div id="enemy-hp-bar" class="health-fill"></div></div>
+          <div style="font-size:0.85rem;" id="enemy-hp-text">0 / 0 HP</div>
+        </div>
+      </div>
+
+      <div class="combat-log" id="combat-log">
+        <div>Welcome to the Combat Dungeon. Select a monster below to attack.</div>
+      </div>
+
+      <h3 style="margin-top:20px;">Dungeon Enemies</h3>
+      <div class="grid-cards" id="enemy-grid"></div>
+    </div>
+
+    <div id="view-inventory" class="view-panel">
+      <h2>🎒 Inventory & Equipment</h2>
+      <div class="equipment-view" style="margin-top: 16px;">
+        
+        <div>
+          <h3>Equipped Gear</h3>
+          <div class="gear-grid" style="margin-top:8px;">
+            <div class="gear-slot" id="slot-helm" title="Helmet" onclick="unequipSlot('helm')">🪖</div>
+            <div class="gear-slot" id="slot-amulet" title="Amulet" onclick="unequipSlot('amulet')">📿</div>
+            <div class="gear-slot" id="slot-weapon" title="Main-Hand" onclick="unequipSlot('weapon')">⚔️</div>
+            <div class="gear-slot" id="slot-chest" title="Chestplate" onclick="unequipSlot('chest')">🦺</div>
+            <div class="gear-slot" id="slot-shield" title="Shield" onclick="unequipSlot('shield')">🛡️</div>
+            <div class="gear-slot" id="slot-legs" title="Leggings" onclick="unequipSlot('legs')">👖</div>
+            <div class="gear-slot" id="slot-boots" title="Boots" onclick="unequipSlot('boots')">🥾</div>
+            <div class="gear-slot" id="slot-ring" title="Ring" onclick="unequipSlot('ring')">💍</div>
+          </div>
+          
+          <div style="background:var(--bg-card); padding:14px; border-radius:8px; border:1px solid var(--border); margin-top:12px; font-size:0.85rem;">
+            <div><strong>Total Attack:</strong> +<span id="stat-att">0</span></div>
+            <div><strong>Total Strength:</strong> +<span id="stat-str">0</span></div>
+            <div><strong>Total Armor:</strong> +<span id="stat-def">0</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h3>Bank Storage (<span id="inv-capacity">0</span> items)</h3>
+            <button class="btn btn-danger" onclick="sellAllJunk()">Sell Extra Resources</button>
+          </div>
+          <div class="inv-grid" id="inventory-container"></div>
+          <div id="item-details" style="margin-top: 12px; min-height: 40px; font-size:0.9rem; color:var(--accent-gold);"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-settings" class="view-panel">
+      <h2>⚙️ Settings & Save Game</h2>
+      <div class="card" style="margin-top:16px; max-width: 480px;">
+        <button class="btn" onclick="saveGame()">💾 Save Game Now</button>
+        <button class="btn" onclick="exportSave()">📤 Export Save Code</button>
+        <button class="btn" onclick="importSave()">📥 Import Save Code</button>
+        <button class="btn btn-danger" onclick="hardReset()">⚠️ Wipe & Reset Profile</button>
+        <button class="btn" onclick="toggleAudio()" id="audio-toggle-btn">🔊 Audio: ON</button>
+      </div>
+    </div>
+
   </div>
-</div>
 
-<script>
-/**
- * Idle FarmVille Engine
- */
+  <div id="offline-modal">
+    <div class="modal-box">
+      <h2 style="color:var(--accent-gold);">🌙 Welcome Back!</h2>
+      <p id="offline-summary">While you were resting, your master continued training...</p>
+      <button class="btn" onclick="document.getElementById('offline-modal').style.display='none'">Claim Gains</button>
+    </div>
+  </div>
 
-const CROPS = [
-  { id: 'wheat', name: 'Wheat', icon: '🌾', cost: 5, sell: 12, growTime: 3, xp: 4, unlockLevel: 1 },
-  { id: 'carrot', name: 'Carrot', icon: '🥕', cost: 15, sell: 35, growTime: 7, xp: 10, unlockLevel: 2 },
-  { id: 'tomato', name: 'Tomato', icon: '🍅', cost: 50, sell: 110, growTime: 15, xp: 25, unlockLevel: 3 },
-  { id: 'corn', name: 'Corn', icon: '🌽', cost: 120, sell: 280, growTime: 30, xp: 55, unlockLevel: 4 },
-  { id: 'strawberry', name: 'Strawberry', icon: '🍓', cost: 350, sell: 850, growTime: 60, xp: 130, unlockLevel: 5 },
-  { id: 'pumpkin', name: 'Pumpkin', icon: '🎃', cost: 1000, sell: 2600, growTime: 120, xp: 300, unlockLevel: 7 }
-];
+  <script>
+    /* =========================================================================
+       AUDIO SYNTHESIZER (Web Audio API - Zero External Files)
+       ========================================================================= */
+    const AudioEngine = {
+      ctx: null,
+      enabled: true,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+        }
+      },
+      play(type) {
+        if (!this.enabled) return;
+        this.init();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
 
-const ANIMALS = [
-  { id: 'chicken', name: 'Chicken', icon: '🐔', cost: 100, baseCost: 100, costMult: 1.25, produceRate: 2, item: 'Egg 🥚', itemVal: 5, count: 0, unlockLevel: 1 },
-  { id: 'sheep', name: 'Sheep', icon: '🐑', cost: 500, baseCost: 500, costMult: 1.3, produceRate: 15, item: 'Wool 🧶', itemVal: 40, count: 0, unlockLevel: 3 },
-  { id: 'cow', name: 'Cow', icon: '🐄', cost: 2500, baseCost: 2500, costMult: 1.35, produceRate: 120, item: 'Milk 🥛', itemVal: 350, count: 0, unlockLevel: 5 }
-];
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        const t = this.ctx.currentTime;
 
-const UPGRADES = [
-  { id: 'expand_plot', name: 'Buy Farm Plot', desc: 'Adds +1 plot to your field', cost: 50, baseCost: 50, costMult: 1.8, count: 0, max: 24, unlockLevel: 1 },
-  { id: 'auto_harvester', name: 'Auto Harvester', desc: 'Automatically harvests ready crops every 2s', cost: 300, purchased: false, unlockLevel: 2 },
-  { id: 'fertilizer', name: 'Golden Fertilizer', desc: 'Increases crop sell values by 25%', cost: 500, level: 0, baseCost: 500, costMult: 2.0, unlockLevel: 3 },
-  { id: 'sprinkler', name: 'Sprinkler System', desc: 'Speeds up crop growth time by 20%', cost: 1000, purchased: false, unlockLevel: 4 }
-];
-
-class FarmGame {
-  constructor() {
-    this.coins = 100;
-    this.level = 1;
-    this.xp = 0;
-    this.selectedCrop = CROPS[0].id;
-    this.plots = [];
-    this.animals = JSON.parse(JSON.stringify(ANIMALS));
-    this.upgrades = JSON.parse(JSON.stringify(UPGRADES));
-    this.lastTick = Date.now();
-
-    this.initPlots(6);
-    this.loadGame();
-    this.setupUI();
-    this.startLoop();
-  }
-
-  initPlots(count) {
-    this.plots = [];
-    for (let i = 0; i < count; i++) {
-      this.plots.push({ crop: null, progress: 0, ready: false });
-    }
-  }
-
-  getXpNeeded(level) {
-    return Math.floor(60 * Math.pow(1.5, level - 1));
-  }
-
-  addXp(amount) {
-    this.xp += amount;
-    const needed = this.getXpNeeded(this.level);
-    if (this.xp >= needed) {
-      this.xp -= needed;
-      this.level++;
-      this.log(`🎉 Level Up! You reached Level ${this.level}!`);
-      this.renderTabs();
-    }
-    this.updateStatsUI();
-  }
-
-  log(msg) {
-    const box = document.getElementById('game-log');
-    if (!box) return;
-    const time = new Date().toLocaleTimeString().split(' ')[0];
-    box.innerHTML = `[${time}] ${msg}<br>` + box.innerHTML;
-  }
-
-  // --- Farm Tile Actions ---
-  clickPlot(idx) {
-    const plot = this.plots[idx];
-    if (plot.ready) {
-      this.harvestPlot(idx);
-    } else if (!plot.crop) {
-      this.plantPlot(idx, this.selectedCrop);
-    }
-  }
-
-  plantPlot(idx, cropId) {
-    const crop = CROPS.find(c => c.id === cropId);
-    if (!crop) return;
-    if (this.level < crop.unlockLevel) {
-      this.log(`⚠️ You need level ${crop.unlockLevel} to plant ${crop.name}.`);
-      return;
-    }
-    if (this.coins < crop.cost) {
-      this.log(`⚠️ Not enough coins for ${crop.name} (Requires 💰${crop.cost}).`);
-      return;
-    }
-
-    this.coins -= crop.cost;
-    this.plots[idx] = {
-      crop: crop.id,
-      progress: 0,
-      ready: false
+        if (type === 'chop' || type === 'mine') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(140, t);
+          osc.frequency.exponentialRampToValueAtTime(40, t + 0.08);
+          gain.gain.setValueAtTime(0.3, t);
+          gain.gain.linearRampToValueAtTime(0.01, t + 0.08);
+          osc.start(t); osc.stop(t + 0.08);
+        } else if (type === 'fish' || type === 'craft') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(300, t);
+          osc.frequency.exponentialRampToValueAtTime(600, t + 0.12);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.linearRampToValueAtTime(0.01, t + 0.12);
+          osc.start(t); osc.stop(t + 0.12);
+        } else if (type === 'hit') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, t);
+          osc.frequency.linearRampToValueAtTime(80, t + 0.1);
+          gain.gain.setValueAtTime(0.25, t);
+          gain.gain.linearRampToValueAtTime(0.01, t + 0.1);
+          osc.start(t); osc.stop(t + 0.1);
+        } else if (type === 'levelup') {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(330, t);
+          osc.frequency.setValueAtTime(440, t + 0.1);
+          osc.frequency.setValueAtTime(554.37, t + 0.2);
+          osc.frequency.setValueAtTime(659.25, t + 0.3);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.linearRampToValueAtTime(0.01, t + 0.5);
+          osc.start(t); osc.stop(t + 0.5);
+        }
+      }
     };
-    this.updateStatsUI();
-    this.renderPlots();
-  }
 
-  harvestPlot(idx) {
-    const plot = this.plots[idx];
-    if (!plot || !plot.ready) return;
-
-    const crop = CROPS.find(c => c.id === plot.crop);
-    const fertUpgrade = this.upgrades.find(u => u.id === 'fertilizer');
-    const multiplier = 1 + (fertUpgrade.level * 0.25);
-    const reward = Math.round(crop.sell * multiplier);
-
-    this.coins += reward;
-    this.addXp(crop.xp);
-    this.plots[idx] = { crop: null, progress: 0, ready: false };
-
-    this.updateStatsUI();
-    this.renderPlots();
-  }
-
-  harvestAll() {
-    this.plots.forEach((p, idx) => {
-      if (p.ready) this.harvestPlot(idx);
-    });
-  }
-
-  // --- Purchases ---
-  buyAnimal(id) {
-    const an = this.animals.find(a => a.id === id);
-    if (!an || this.coins < an.cost) return;
-
-    this.coins -= an.cost;
-    an.count++;
-    an.cost = Math.round(an.baseCost * Math.pow(an.costMult, an.count));
-    this.log(`Bought a ${an.name}!`);
-    this.updateStatsUI();
-    this.renderTabs();
-  }
-
-  buyUpgrade(id) {
-    const up = this.upgrades.find(u => u.id === id);
-    if (!up || this.coins < up.cost) return;
-
-    if (id === 'expand_plot') {
-      if (this.plots.length >= up.max) return;
-      this.coins -= up.cost;
-      up.count++;
-      up.cost = Math.round(up.baseCost * Math.pow(up.costMult, up.count));
-      this.plots.push({ crop: null, progress: 0, ready: false });
-      this.renderPlots();
-    } else if (id === 'auto_harvester' || id === 'sprinkler') {
-      this.coins -= up.cost;
-      up.purchased = true;
-    } else if (id === 'fertilizer') {
-      this.coins -= up.cost;
-      up.level++;
-      up.cost = Math.round(up.baseCost * Math.pow(up.costMult, up.level));
+    function toggleAudio() {
+      AudioEngine.enabled = !AudioEngine.enabled;
+      document.getElementById('audio-toggle-btn').innerText = AudioEngine.enabled ? '🔊 Audio: ON' : '🔇 Audio: OFF';
     }
-
-    this.log(`Purchased upgrade: ${up.name}!`);
-    this.updateStatsUI();
-    this.renderTabs();
-  }
-
-  // --- Loop & Engine ---
-  startLoop() {
-    setInterval(() => {
-      const now = Date.now();
-      const dt = (now - this.lastTick) / 1000;
-      this.lastTick = now;
-      this.update(dt);
-    }, 100);
-
-    // Auto-save every 10s
-    setInterval(() => this.saveGame(true), 10000);
-  }
-
-  update(dt) {
-    const sprinkler = this.upgrades.find(u => u.id === 'sprinkler')?.purchased;
-    const speedMult = sprinkler ? 1.25 : 1.0;
-
-    // Grow Plots
-    let plotChanged = false;
-    this.plots.forEach(plot => {
-      if (plot.crop && !plot.ready) {
-        const crop = CROPS.find(c => c.id === plot.crop);
-        plot.progress += (dt * speedMult);
-        if (plot.progress >= crop.growTime) {
-          plot.progress = crop.growTime;
-          plot.ready = true;
-          plotChanged = true;
-        }
-      }
-    });
-
-    // Passive Animals
-    this.animals.forEach(an => {
-      if (an.count > 0) {
-        const incomeRate = (an.itemVal / an.produceRate) * an.count;
-        this.coins += incomeRate * dt;
-      }
-    });
-
-    // Auto-Harvester Check
-    const autoHarvest = this.upgrades.find(u => u.id === 'auto_harvester')?.purchased;
-    if (autoHarvest) {
-      this.autoTimer = (this.autoTimer || 0) + dt;
-      if (this.autoTimer >= 1.5) {
-        this.autoTimer = 0;
-        this.harvestAll();
-      }
-    }
-
-    this.updateStatsUI();
-    this.updateGridVisuals();
-  }
-
-  // --- Rendering UI ---
-  setupUI() {
-    this.renderPlots();
-    this.renderTabs();
-    this.updateStatsUI();
-  }
-
-  updateStatsUI() {
-    document.getElementById('stat-coins').innerText = Math.floor(this.coins).toLocaleString();
-    document.getElementById('stat-level').innerText = this.level;
-    const needed = this.getXpNeeded(this.level);
-    document.getElementById('stat-xp').innerText = `${Math.floor(this.xp)}/${needed}`;
-    document.getElementById('xp-bar').style.width = `${Math.min(100, (this.xp / needed) * 100)}%`;
-  }
-
-  renderPlots() {
-    const grid = document.getElementById('farm-grid');
-    grid.innerHTML = '';
-
-    this.plots.forEach((plot, idx) => {
-      const tile = document.createElement('div');
-      tile.className = 'tile';
-      tile.id = `plot-${idx}`;
-
-      if (!plot.crop) {
-        tile.classList.add('empty');
-        tile.innerHTML = `
-          <div class="tile-name">Empty</div>
-          <div class="tile-icon">🟫</div>
-          <div class="tile-timer">Click to Plant</div>
-        `;
-      } else {
-        const crop = CROPS.find(c => c.id === plot.crop);
-        if (plot.ready) {
-          tile.classList.add('ready');
-          tile.innerHTML = `
-            <div class="tile-name">${crop.name}</div>
-            <div class="tile-icon">${crop.icon}</div>
-            <div class="tile-timer" style="background:#2e7d32;">READY</div>
-          `;
-        } else {
-          tile.classList.add('growing');
-          const remaining = Math.max(0, Math.ceil(crop.growTime - plot.progress));
-          tile.innerHTML = `
-            <div class="tile-name">${crop.name}</div>
-            <div class="tile-icon">🌱</div>
-            <div class="tile-timer">${remaining}s</div>
-          `;
-        }
-      }
-
-      tile.onclick = () => this.clickPlot(idx);
-      grid.appendChild(tile);
-    });
-  }
-
-  updateGridVisuals() {
-    this.plots.forEach((plot, idx) => {
-      const tile = document.getElementById(`plot-${idx}`);
-      if (!tile || !plot.crop) return;
-
-      const crop = CROPS.find(c => c.id === plot.crop);
-      const timerEl = tile.querySelector('.tile-timer');
-
-      if (plot.ready) {
-        if (!tile.classList.contains('ready')) {
-          tile.className = 'tile ready';
-          tile.querySelector('.tile-icon').innerText = crop.icon;
-          timerEl.innerText = 'READY';
-          timerEl.style.background = '#2e7d32';
-        }
-      } else {
-        const remaining = Math.max(0, Math.ceil(crop.growTime - plot.progress));
-        if (timerEl) timerEl.innerText = `${remaining}s`;
-      }
-    });
-  }
-
-  switchTab(tabKey) {
-    document.querySelectorAll('.panel-tabs .tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-    event.target.classList.add('active');
-    document.getElementById(`tab-${tabKey}`).classList.add('active');
-  }
-
-  selectCrop(cropId) {
-    this.selectedCrop = cropId;
-    const crop = CROPS.find(c => c.id === cropId);
-    document.getElementById('current-selected-crop').innerText = `${crop.name} (${crop.icon})`;
-  }
-
-  renderTabs() {
-    // Crops tab
-    const cropsTab = document.getElementById('tab-crops');
-    cropsTab.innerHTML = CROPS.map(c => {
-      const locked = this.level < c.unlockLevel;
-      return `
-        <div class="card">
-          <div class="card-info">
-            <h4>${c.icon} ${c.name} ${locked ? `(Lvl ${c.unlockLevel})` : ''}</h4>
-            <p>Cost: 💰${c.cost} | Profit: 💰${c.sell} | Time: ${c.growTime}s</p>
-          </div>
-          <button class="card-btn" 
-            ${locked ? 'disabled' : ''} 
-            onclick="Game.selectCrop('${c.id}')">
-            ${this.selectedCrop === c.id ? 'Equipped' : 'Select'}
-          </button>
-        </div>
-      `;
-    }).join('');
-
-    // Animals tab
-    const animalsTab = document.getElementById('tab-animals');
-    animalsTab.innerHTML = this.animals.map(a => {
-      const locked = this.level < a.unlockLevel;
-      const rate = (a.itemVal / a.produceRate).toFixed(1);
-      return `
-        <div class="card">
-          <div class="card-info">
-            <h4>${a.icon} ${a.name} [x${a.count}]</h4>
-            <p>Produces ${a.item} (+💰${rate}/s total)</p>
-          </div>
-          <button class="card-btn" 
-            ${locked || this.coins < a.cost ? 'disabled' : ''} 
-            onclick="Game.buyAnimal('${a.id}')">
-            Buy (💰${a.cost})
-          </button>
-        </div>
-      `;
-    }).join('');
-
-    // Upgrades tab
-    const upTab = document.getElementById('tab-upgrades');
-    upTab.innerHTML = this.upgrades.map(u => {
-      const locked = this.level < u.unlockLevel;
-      let btnLabel = `Buy (💰${u.cost})`;
-      let isMax = false;
-
-      if (u.id === 'expand_plot') {
-        btnLabel = `Expand (💰${u.cost})`;
-        if (this.plots.length >= u.max) isMax = true;
-      } else if (u.purchased) {
-        btnLabel = 'Owned';
-        isMax = true;
-      } else if (u.id === 'fertilizer') {
-        btnLabel = `Lvl ${u.level + 1} (💰${u.cost})`;
-      }
-
-      return `
-        <div class="card">
-          <div class="card-info">
-            <h4>${u.name} ${locked ? `(Lvl ${u.unlockLevel})` : ''}</h4>
-            <p>${u.desc}</p>
-          </div>
-          <button class="card-btn" 
-            ${locked || isMax || this.coins < u.cost ? 'disabled' : ''} 
-            onclick="Game.buyUpgrade('${u.id}')">
-            ${isMax ? 'MAXED' : btnLabel}
-          </button>
-        </div>
-      `;
-    }).join('');
-  }
-
-  // --- Save / Load & Offline Gains ---
-  saveGame(silent = false) {
-    const saveData = {
-      coins: this.coins,
-      xp: this.xp,
-      level: this.level,
-      plots: this.plots,
-      animals: this.animals,
-      upgrades: this.upgrades,
-      selectedCrop: this.selectedCrop,
-      lastSaved: Date.now()
-    };
-    localStorage.setItem('idle_farm_save', JSON.stringify(saveData));
-    if (!silent) this.log('💾 Game Saved!');
-  }
-
-  loadGame() {
-    const dataStr = localStorage.getItem('idle_farm_save');
-    if (!dataStr) return;
-
-    try {
-      const data = JSON.parse(dataStr);
-      this.coins = data.coins || 0;
-      this.xp = data.xp || 0;
-      this.level = data.level || 1;
-      this.plots = data.plots || this.plots;
-      this.animals = data.animals || this.animals;
-      this.upgrades = data.upgrades || this.upgrades;
-      this.selectedCrop = data.selectedCrop || CROPS[0].id;
-
-      // Process Offline Growth
-      if (data.lastSaved) {
-        const elapsedSec = (Date.now() - data.lastSaved) / 1000;
-        if (elapsedSec > 5) {
-          this.calculateOffline(elapsedSec);
-        }
-      }
-    } catch (e) {
-      console.error('Save file corrupt', e);
-    }
-  }
-
-  calculateOffline(seconds) {
-    let animalEarnings = 0;
-    this.animals.forEach(an => {
-      if (an.count > 0) {
-        animalEarnings += (an.itemVal / an.produceRate) * an.count * seconds;
-      }
-    });
-
-    let cropsMatured = 0;
-    this.plots.forEach(plot => {
-      if (plot.crop && !plot.ready) {
-        const crop = CROPS.find(c => c.id === plot.crop);
-        plot.progress += seconds;
-        if (plot.progress >= crop.growTime) {
-          plot.progress = crop.growTime;
-          plot.ready = true;
-          cropsMatured++;
-        }
-      }
-    });
-
-    this.coins += animalEarnings;
-    const summary = document.getElementById('offline-summary');
-    summary.innerHTML = `
-      You were away for <strong>${Math.floor(seconds)}s</strong>.<br><br>
-      🐔 Animals produced: <strong>💰${Math.floor(animalEarnings).toLocaleString()}</strong><br>
-      🌾 Crops matured: <strong>${cropsMatured}</strong>
-    `;
-    document.getElementById('offline-modal').style.display = 'flex';
-  }
-
-  resetGame() {
-    if (confirm('Are you sure you want to reset your entire farm?')) {
-      localStorage.removeItem('idle_farm_save');
-      location.reload();
-    }
-  }
-}
-
-// Start Game
-let Game;
-window.onload = () => {
-  Game = new FarmGame();
-};
-</script>
-</body>
-</html>
